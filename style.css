@@ -391,7 +391,7 @@ section{padding:96px 0;}
   }
   .hero-photo{object-position:right center;}
   .hero-overlay{display:none;}
-  .hero-badge{width:120px;height:120px;font-size:11px;right:16px;bottom:16px;}
+  .hero-badge{width:120px;height:120px;font-size:11px;left:16px;bottom:16px;}
   .hero-inner{padding-top:32px;}
 }
 
