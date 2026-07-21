@@ -79,20 +79,32 @@ h1,h2,h3{font-family:var(--font-head);margin:0;line-height:1.4;}
 }
 .header-inner{
   display:flex;align-items:center;justify-content:space-between;
-  height:76px;gap:20px;
+  min-height:76px;gap:20px;padding:12px 0;
 }
 .logo{display:flex;flex-direction:column;line-height:1.15;}
 .logo-en{font-family:var(--font-head);font-weight:700;font-size:21px;color:var(--green-700);letter-spacing:.02em;}
 .logo-jp{font-size:11.5px;color:var(--ink-mute);letter-spacing:.03em;}
 
-.global-nav ul{display:flex;gap:34px;}
+.global-nav ul{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:16px 26px;}
 .global-nav a{font-size:14.5px;font-weight:500;color:var(--ink-soft);position:relative;padding:4px 0;}
-.global-nav a:hover{color:var(--green-700);}
-.global-nav a::after{
+.global-nav a:not(.nav-app-link):hover{color:var(--green-700);}
+.global-nav a:not(.nav-app-link)::after{
   content:"";position:absolute;left:0;bottom:-4px;width:0;height:2px;background:var(--green);
   transition:width .2s ease;
 }
-.global-nav a:hover::after{width:100%;}
+.global-nav a:not(.nav-app-link):hover::after{width:100%;}
+
+/* Direct links to live apps: visually set apart from the section anchors */
+.nav-item-app-first{margin-left:6px;padding-left:22px;border-left:1px solid var(--line);}
+.global-nav .nav-app-link{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:999px;
+  background:var(--green-light);color:var(--green-700);
+  font-weight:700;font-size:13.5px;
+  transition:background .15s ease, color .15s ease;
+}
+.global-nav .nav-app-link:hover{background:var(--green-700);color:#fff;}
+.global-nav .nav-app-link .icon{width:14px;height:14px;}
 
 .nav-toggle{
   display:none;flex-direction:column;justify-content:center;gap:5px;
@@ -212,8 +224,10 @@ section{padding:96px 0;}
 }
 .app-item{
   display:grid;grid-template-columns:1.15fr 1fr;gap:40px;align-items:center;
-  padding:44px 40px;
+  padding:44px 40px;border-radius:var(--radius-md);
+  cursor:pointer;transition:background .2s ease, box-shadow .2s ease;
 }
+.app-item:hover{background:var(--green-lighter);box-shadow:var(--shadow);}
 .app-item-reverse{grid-template-columns:1fr 1.15fr;}
 .app-item-reverse .app-copy{order:2;}
 .app-item-reverse .app-visual{order:1;}
@@ -225,6 +239,12 @@ section{padding:96px 0;}
 }
 .app-copy h3{font-size:22px;font-weight:700;margin-bottom:10px;}
 .app-copy>p{font-size:14px;color:var(--ink-soft);margin:0 0 18px;}
+.app-cta{
+  display:inline-flex;align-items:center;gap:6px;margin-top:22px;
+  font-size:14px;font-weight:700;color:var(--green-700);
+}
+.app-cta .icon{width:16px;height:16px;transition:transform .2s ease;}
+.app-item:hover .app-cta .icon{transform:translateX(4px);}
 .check-list{display:flex;flex-direction:column;gap:10px;}
 .check-list li{
   position:relative;padding-left:26px;font-size:14px;color:var(--ink-soft);
@@ -243,12 +263,16 @@ section{padding:96px 0;}
 .phone-shot{
   width:100%;max-width:220px;height:auto;
   filter:drop-shadow(0 18px 32px rgba(15,60,45,.22));
+  transition:transform .25s ease;
 }
 
 .laptop-shot{
   width:100%;max-width:360px;height:auto;
   filter:drop-shadow(0 18px 32px rgba(15,60,45,.18));
+  transition:transform .25s ease;
 }
+
+.app-item:hover .phone-shot,.app-item:hover .laptop-shot{transform:scale(1.03);}
 
 /* ---------- Target ---------- */
 .target-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;text-align:center;}
@@ -339,11 +363,19 @@ section{padding:96px 0;}
     z-index:50;
   }
   .global-nav.is-open{opacity:1;transform:translateY(0);pointer-events:auto;}
-  .global-nav ul{flex-direction:column;gap:4px;}
+  .global-nav ul{flex-direction:column;flex-wrap:nowrap;gap:4px;}
   .global-nav li{width:100%;}
   .global-nav a{
     display:block;width:100%;padding:16px 4px;font-size:16px;
     border-bottom:1px solid var(--line);
+  }
+  .nav-item-app-first{
+    margin-left:0;padding-left:0;border-left:none;
+    margin-top:10px;padding-top:14px;border-top:1px solid var(--line);
+  }
+  .global-nav .nav-app-link{
+    width:100%;border-radius:12px;padding:14px 12px;
+    border-bottom:none;justify-content:flex-start;
   }
   .nav-toggle{display:flex;}
   .btn-header{display:none;}
