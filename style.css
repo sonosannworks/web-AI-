@@ -279,6 +279,12 @@ section{padding:96px 0;}
   font-size:12.5px;font-weight:700;line-height:1.6;text-align:center;
 }
 
+/* ---------- Contact form ---------- */
+.contact-form-frame{max-width:640px;margin:0 auto;}
+.contact-form-frame iframe{
+  display:block;width:100%;max-width:640px;height:1693px;border:0;
+}
+
 /* ---------- Why us ---------- */
 .why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;text-align:center;}
 .why-item{padding:30px 16px;border-radius:var(--radius-md);background:var(--white);border:1px solid var(--line);}
