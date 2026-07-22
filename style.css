@@ -194,6 +194,7 @@ section{padding:96px 0;}
   display:grid;grid-template-columns:repeat(4,1fr);gap:22px;
 }
 .service-card{
+  display:flex;flex-direction:column;
   border-radius:var(--radius-md);
   padding:30px 24px;
   border:1px solid transparent;
@@ -207,6 +208,21 @@ section{padding:96px 0;}
   width:52px;height:52px;border-radius:14px;margin-bottom:18px;color:#fff;
 }
 .service-icon svg{width:26px;height:26px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ---------- Service CTA ---------- */
+.service-cta,
+.service-cta-group{margin-top:auto;padding-top:16px;}
+.service-cta-group{display:flex;flex-wrap:wrap;gap:8px;}
+.service-cta{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 14px;border-radius:999px;
+  background:rgba(255,255,255,.72);
+  color:var(--ink);font-weight:700;font-size:13px;
+  border:1px solid rgba(27,43,38,.08);
+  transition:background .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.service-cta:hover{background:#fff;transform:translateY(-1px);box-shadow:0 6px 16px -8px rgba(27,43,38,.25);}
+.service-cta .icon{width:14px;height:14px;flex-shrink:0;}
 
 .card-teal{background:var(--green-light);}
 .card-teal .service-icon{background:var(--green);}
@@ -377,6 +393,9 @@ section{padding:96px 0;}
   section{padding:64px 0;}
   .target-grid{grid-template-columns:1fr;gap:36px;}
   .why-grid{grid-template-columns:1fr;}
+
+  .service-cta-group{flex-direction:column;}
+  .service-cta{width:100%;justify-content:center;padding:12px 14px;font-size:14px;}
 
   .hero{min-height:0;padding:0 0 56px;}
   .hero-visual{
