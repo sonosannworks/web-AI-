@@ -126,6 +126,9 @@ section{padding:96px 0;}
   background:var(--green-light);padding:7px 16px;border-radius:999px;margin:0 0 22px;
 }
 .section-title{font-size:clamp(24px,3vw,32px);font-weight:700;color:var(--ink);}
+.section-lead{
+  max-width:640px;margin:18px auto 0;font-size:15px;line-height:1.9;color:var(--ink-soft);
+}
 
 /* ---------- Hero ---------- */
 .hero{
