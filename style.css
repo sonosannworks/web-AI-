@@ -378,7 +378,6 @@ section{padding:96px 0;}
     border-bottom:none;justify-content:flex-start;
   }
   .nav-toggle{display:flex;}
-  .btn-header{display:none;}
   section{padding:64px 0;}
   .target-grid{grid-template-columns:1fr;gap:36px;}
   .why-grid{grid-template-columns:1fr;}

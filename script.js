@@ -1,4 +1,21 @@
-document.addEventListener("DOMContentLoaded", function () {
+function loadPartial(url, placeholderId, callback) {
+  var placeholder = document.getElementById(placeholderId);
+  if (!placeholder) return;
+
+  fetch(url)
+    .then(function (res) {
+      return res.text();
+    })
+    .then(function (html) {
+      placeholder.innerHTML = html;
+      if (callback) callback();
+    })
+    .catch(function (err) {
+      console.error("Failed to load " + url, err);
+    });
+}
+
+function initNav() {
   var toggle = document.getElementById("nav-toggle");
   var nav = document.getElementById("global-nav");
 
@@ -15,4 +32,9 @@ document.addEventListener("DOMContentLoaded", function () {
       toggle.setAttribute("aria-expanded", "false");
     });
   });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  loadPartial("header.html", "site-header-placeholder", initNav);
+  loadPartial("footer.html", "site-footer-placeholder");
 });
