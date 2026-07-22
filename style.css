@@ -28,6 +28,7 @@
 
 *{box-sizing:border-box;}
 html{scroll-behavior:smooth;}
+[id]{scroll-margin-top:90px;}
 body{
   margin:0;
   font-family:var(--font-body);
@@ -73,6 +74,7 @@ h1,h2,h3{font-family:var(--font-head);margin:0;line-height:1.4;}
 /* ---------- Header ---------- */
 .site-header{
   position:sticky;top:0;z-index:100;
+  will-change:transform;
   background:rgba(252,254,253,.9);
   backdrop-filter:blur(10px);
   border-bottom:1px solid var(--line);

@@ -7,7 +7,7 @@ function loadPartial(url, placeholderId, callback) {
       return res.text();
     })
     .then(function (html) {
-      placeholder.innerHTML = html;
+      placeholder.outerHTML = html;
       if (callback) callback();
     })
     .catch(function (err) {
