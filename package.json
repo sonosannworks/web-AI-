@@ -1,0 +1,13 @@
+{
+  "name": "web-ai-support",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "googleapis": "^144.0.0",
+    "stripe": "^17.5.0"
+  }
+}

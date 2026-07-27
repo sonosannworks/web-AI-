@@ -1,1 +1,9 @@
 .claude/
+data/
+node_modules/
+.vercel
+.env
+.env.local
+
+.vercel
+.env*

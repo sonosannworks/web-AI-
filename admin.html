@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>購入履歴管理</title>
+<style>
+  :root {
+    color-scheme: light dark;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #222;
+    background: #fafafa;
+  }
+  h1 {
+    font-size: 1.4rem;
+    margin-bottom: 1.2rem;
+  }
+  #login-view {
+    max-width: 360px;
+    margin: 80px auto;
+    text-align: center;
+  }
+  #login-view input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  #login-view button, .toolbar button {
+    padding: 10px 16px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    background: #2563eb;
+    color: #fff;
+    cursor: pointer;
+  }
+  #login-view button:hover, .toolbar button:hover {
+    background: #1d4ed8;
+  }
+  #error-msg {
+    color: #dc2626;
+    margin-top: 8px;
+    min-height: 1.2em;
+    font-size: 0.9rem;
+  }
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+  .toolbar .right { display: flex; gap: 8px; }
+  .toolbar button.secondary {
+    background: #6b7280;
+  }
+  .toolbar button.secondary:hover {
+    background: #4b5563;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-size: 0.9rem;
+  }
+  th, td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+    white-space: nowrap;
+  }
+  th {
+    background: #f3f4f6;
+    position: sticky;
+    top: 0;
+  }
+  tbody tr:hover {
+    background: #f9fafb;
+  }
+  .status-paid { color: #16a34a; font-weight: 600; }
+  .status-other { color: #b45309; font-weight: 600; }
+  #summary {
+    margin-bottom: 12px;
+    color: #555;
+    font-size: 0.9rem;
+  }
+  .hidden { display: none; }
+  #table-wrap {
+    overflow-x: auto;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body { background: #111827; color: #e5e7eb; }
+    table { background: #1f2937; }
+    th { background: #111827; }
+    th, td { border-bottom-color: #374151; }
+    tbody tr:hover { background: #27303f; }
+    #login-view input { background: #1f2937; border-color: #374151; color: #e5e7eb; }
+  }
+
+  .tab-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 8px 16px; border: 1px solid #ccc; border-radius: 6px;
+    background: #f5f5f5; cursor: pointer; font-size: 14px;
+  }
+  .tab-btn.active { background: #333; color: #fff; border-color: #333; }
+  .record-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .record-table th, .record-table td {
+    border: 1px solid #ddd; padding: 6px 10px; text-align: left; vertical-align: top;
+  }
+  .record-table th { background: #fafafa; position: sticky; top: 0; }
+  .record-new { background: #fff8e1; } /* 前回閲覧以降の新着行 */
+  .empty-state { padding: 24px; color: #888; text-align: center; }
+  .blog-toolbar { margin-bottom: 12px; }
+  .blog-toolbar button { padding: 6px 14px; cursor: pointer; }
+  .blog-form {
+    border: 1px solid #ccc; border-radius: 6px; padding: 16px; margin-bottom: 16px; background: #fafafa;
+  }
+  .blog-form label { display: block; margin-bottom: 8px; font-size: 13px; }
+  .blog-form input[type="text"] { width: 100%; padding: 6px; box-sizing: border-box; }
+  .blog-form .form-actions { margin-top: 8px; }
+  .blog-form .form-actions button { margin-right: 8px; padding: 6px 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div id="login-view">
+  <h1>購入履歴管理</h1>
+  <input type="password" id="password-input" placeholder="管理者パスワード" autocomplete="current-password">
+  <button id="login-btn">ログイン</button>
+  <div id="error-msg"></div>
+</div>
+
+<div id="admin-view" class="hidden">
+  <h1>購入履歴</h1>
+  <div class="toolbar">
+    <div id="summary"></div>
+    <div class="right">
+      <button id="refresh-btn">更新</button>
+      <button id="logout-btn" class="secondary">ログアウト</button>
+    </div>
+  </div>
+  <div id="table-wrap" class="hidden">
+    <table>
+      <thead>
+        <tr>
+          <th>購入日時</th>
+          <th>商品名</th>
+          <th>金額</th>
+          <th>ステータス</th>
+          <th>購入者メール</th>
+          <th>Payment Link ID</th>
+          <th>Session ID</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="purchases">購入履歴</button>
+    <button class="tab-btn" data-tab="client">クライアントフォーム</button>
+    <button class="tab-btn" data-tab="inquiry">お問い合わせ</button>
+    <button class="tab-btn" data-tab="monitor">ポートフォリオモニター募集</button>
+    <button class="tab-btn" data-tab="blog">blog</button>
+  </div>
+
+  <div id="tab-content"></div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'admin_password';
+
+  const loginView = document.getElementById('login-view');
+  const adminView = document.getElementById('admin-view');
+  const passwordInput = document.getElementById('password-input');
+  const loginBtn = document.getElementById('login-btn');
+  const errorMsg = document.getElementById('error-msg');
+  const rowsEl = document.getElementById('rows');
+  const summaryEl = document.getElementById('summary');
+  const refreshBtn = document.getElementById('refresh-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  function formatDate(unixSeconds) {
+    return new Date(unixSeconds * 1000).toLocaleString('ja-JP');
+  }
+
+  function formatAmount(amount, currency) {
+    try {
+      return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: currency.toUpperCase() }).format(amount);
+    } catch {
+      return `${amount} ${currency}`;
+    }
+  }
+
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str).replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+  }
+
+  function renderRows(purchases) {
+    rowsEl.innerHTML = purchases.map((p) => `
+      <tr>
+        <td>${formatDate(p.created_at)}</td>
+        <td>${escapeHtml(p.product_name)}</td>
+        <td>${formatAmount(p.amount, p.currency)}</td>
+        <td class="${p.status === 'paid' ? 'status-paid' : 'status-other'}">${escapeHtml(p.status)}</td>
+        <td>${escapeHtml(p.customer_email)}</td>
+        <td>${escapeHtml(p.payment_link_id)}</td>
+        <td title="${escapeHtml(p.id)}">${escapeHtml(p.id.slice(0, 20))}…</td>
+      </tr>
+    `).join('');
+    summaryEl.textContent = `全 ${purchases.length} 件`;
+  }
+
+  async function loadPurchases(password) {
+    const res = await fetch('/api/purchases', {
+      headers: { Authorization: `Bearer ${password}` },
+    });
+
+    if (res.status === 401) {
+      throw new Error('unauthorized');
+    }
+    if (!res.ok) {
+      throw new Error(`failed with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data.purchases;
+  }
+
+  async function tryLoad(password) {
+    errorMsg.textContent = '';
+    try {
+      const purchases = await loadPurchases(password);
+      sessionStorage.setItem(STORAGE_KEY, password);
+      loginView.classList.add('hidden');
+      adminView.classList.remove('hidden');
+      window.__showFormsTab('purchases');
+    } catch (err) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      loginView.classList.remove('hidden');
+      adminView.classList.add('hidden');
+      errorMsg.textContent = err.message === 'unauthorized'
+        ? 'パスワードが違います'
+        : '読み込みに失敗しました';
+    }
+  }
+
+  loginBtn.addEventListener('click', () => tryLoad(passwordInput.value));
+  passwordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') tryLoad(passwordInput.value);
+  });
+
+  refreshBtn.addEventListener('click', () => {
+    const password = sessionStorage.getItem(STORAGE_KEY);
+    if (password) tryLoad(password);
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    sessionStorage.removeItem(STORAGE_KEY);
+    passwordInput.value = '';
+    loginView.classList.remove('hidden');
+    adminView.classList.add('hidden');
+  });
+
+  const savedPassword = sessionStorage.getItem(STORAGE_KEY);
+  if (savedPassword) {
+    tryLoad(savedPassword);
+  }
+
+  (function () {
+    const TABS = ['purchases', 'client', 'inquiry', 'monitor', 'blog'];
+    const WRITABLE_TABS = ['blog']; // 新規追加・編集ができるタブ
+    const tabContent = document.getElementById('tab-content');
+
+    // 「このタブを最後に見た日時」をブラウザに保存し、それより新しい行をハイライトする。
+    function getLastSeen(tab) {
+      return localStorage.getItem('lastSeen_' + tab) || '1970-01-01';
+    }
+    function setLastSeen(tab) {
+      localStorage.setItem('lastSeen_' + tab, new Date().toISOString());
+    }
+
+    function getFormsAuthToken() {
+      return sessionStorage.getItem(STORAGE_KEY) || '';
+    }
+
+    async function loadPurchasesForTab() {
+      const res = await fetch('/api/purchases', {
+        headers: { Authorization: 'Bearer ' + getFormsAuthToken() },
+      });
+      if (!res.ok) throw new Error('failed to load purchases');
+      const data = await res.json();
+      return { type: 'purchases', records: data.purchases || data.records || data };
+    }
+
+    async function loadFormSheet(type) {
+      const res = await fetch('/api/forms?type=' + type, {
+        headers: { Authorization: 'Bearer ' + getFormsAuthToken() },
+      });
+      if (!res.ok) throw new Error('failed to load ' + type);
+      return res.json();
+    }
+
+    async function fetchFormHeaders(type) {
+      const res = await fetch('/api/forms?type=' + type + '&headers=1', {
+        headers: { Authorization: 'Bearer ' + getFormsAuthToken() },
+      });
+      if (!res.ok) throw new Error('failed to load headers for ' + type);
+      const data = await res.json();
+      return data.headers || [];
+    }
+
+    function escapeFormAttr(v) {
+      return (v ?? '').toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    }
+
+    function buildFormFields(headers, values) {
+      values = values || {};
+      return headers
+        .map(
+          (h) =>
+            `<label>${h}<br><input type="text" data-field="${escapeFormAttr(h)}" value="${escapeFormAttr(values[h])}" /></label>`
+        )
+        .join('');
+    }
+
+    // ---- blog: 新規追加フォーム ----
+    async function showBlogAddForm() {
+      const headers = await fetchFormHeaders('blog');
+      const formHtml = `
+        <div class="blog-form" id="blog-edit-form">
+          <h4>新規追加</h4>
+          ${buildFormFields(headers)}
+          <div class="form-actions">
+            <button id="blog-form-save">保存</button>
+            <button id="blog-form-cancel">キャンセル</button>
+          </div>
+        </div>`;
+      document.getElementById('blog-form-container').innerHTML = formHtml;
+      document.getElementById('blog-form-cancel').onclick = () => {
+        document.getElementById('blog-form-container').innerHTML = '';
+      };
+      document.getElementById('blog-form-save').onclick = async () => {
+        const body = {};
+        document.querySelectorAll('#blog-edit-form [data-field]').forEach((el) => {
+          body[el.dataset.field] = el.value;
+        });
+        const res = await fetch('/api/forms?type=blog', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + getFormsAuthToken(), 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (res.ok) {
+          showFormsTab('blog');
+        } else {
+          alert('保存に失敗しました');
+        }
+      };
+    }
+
+    // ---- blog: 既存行の編集フォーム ----
+    async function showBlogEditForm(rowNum, record) {
+      const headers = await fetchFormHeaders('blog');
+      const formHtml = `
+        <div class="blog-form" id="blog-edit-form">
+          <h4>編集(行 ${rowNum})</h4>
+          ${buildFormFields(headers, record)}
+          <div class="form-actions">
+            <button id="blog-form-save">保存</button>
+            <button id="blog-form-cancel">キャンセル</button>
+          </div>
+        </div>`;
+      document.getElementById('blog-form-container').innerHTML = formHtml;
+      document.getElementById('blog-form-cancel').onclick = () => {
+        document.getElementById('blog-form-container').innerHTML = '';
+      };
+      document.getElementById('blog-form-save').onclick = async () => {
+        const values = {};
+        document.querySelectorAll('#blog-edit-form [data-field]').forEach((el) => {
+          values[el.dataset.field] = el.value;
+        });
+        const res = await fetch('/api/forms?type=blog', {
+          method: 'PATCH',
+          headers: { Authorization: 'Bearer ' + getFormsAuthToken(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ row: rowNum, values }),
+        });
+        if (res.ok) {
+          showFormsTab('blog');
+        } else {
+          alert('更新に失敗しました');
+        }
+      };
+    }
+
+    function renderFormsTable(records, tab) {
+      const editable = WRITABLE_TABS.includes(tab);
+      let toolbarHtml = '';
+      if (editable) {
+        toolbarHtml = `
+          <div class="blog-toolbar"><button id="blog-add-btn">＋新規追加</button></div>
+          <div id="blog-form-container"></div>`;
+      }
+
+      if (!records || records.length === 0) {
+        tabContent.innerHTML = toolbarHtml + '<div class="empty-state">データがありません</div>';
+      } else {
+        const lastSeen = getLastSeen(tab);
+        const cols = Object.keys(records[0]).filter((k) => k !== '_row');
+        const tsKey = cols[0]; // タイムスタンプ列(先頭)想定
+
+        let html = '<table class="record-table"><thead><tr>';
+        cols.forEach((c) => (html += `<th>${c}</th>`));
+        if (editable) html += '<th>操作</th>';
+        html += '</tr></thead><tbody>';
+
+        records.forEach((r) => {
+          const isNew = tsKey && !isNaN(new Date(r[tsKey])) && new Date(r[tsKey]) > new Date(lastSeen);
+          html += `<tr class="${isNew ? 'record-new' : ''}">`;
+          cols.forEach((c) => (html += `<td>${(r[c] ?? '').toString()}</td>`));
+          if (editable) html += `<td><button class="edit-btn" data-row="${r._row}">編集</button></td>`;
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+        tabContent.innerHTML = toolbarHtml + html;
+
+        if (editable) {
+          document.querySelectorAll('.edit-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const rowNum = btn.dataset.row;
+              const record = records.find((r) => String(r._row) === rowNum);
+              showBlogEditForm(rowNum, record);
+            });
+          });
+        }
+      }
+
+      if (editable) {
+        document.getElementById('blog-add-btn').onclick = showBlogAddForm;
+      }
+      setLastSeen(tab);
+    }
+
+    async function showFormsTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+      tabContent.innerHTML = '<div class="empty-state">読み込み中...</div>';
+      try {
+        const data = tab === 'purchases' ? await loadPurchasesForTab() : await loadFormSheet(tab);
+        renderFormsTable(data.records, tab);
+      } catch (e) {
+        tabContent.innerHTML = `<div class="empty-state">読み込みエラー: ${e.message}</div>`;
+      }
+    }
+
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => showFormsTab(btn.dataset.tab));
+    });
+
+    // ログイン完了後にこの初期表示を呼ぶ(既存のログイン成功処理から呼び出す)
+    window.__showFormsTab = showFormsTab;
+  })();
+</script>
+
+</body>
+</html>
