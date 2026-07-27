@@ -25,7 +25,7 @@ import { google } from 'googleapis';
 // スプレッドシートが増えたらここに1行足すだけでよい。
 // range のシート名部分は、実際のシート名(タブ名)と違う場合は書き換えてください。
 const SHEET_MAP = {
-  client:  { envKey: 'SHEET_ID_CLIENT',  sheetName: 'フォームの回答 1' },
+  client:  { envKey: 'SHEET_ID_CLIENT',  sheetName: 'クライアント連絡' },
   inquiry: { envKey: 'SHEET_ID_INQUIRY', sheetName: 'フォームの回答 1' },
   monitor: { envKey: 'SHEET_ID_MONITOR', sheetName: 'フォームの回答 1' },
   blog:    { envKey: 'SHEET_ID_BLOG',    sheetName: 'シート1' },
