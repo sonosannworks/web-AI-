@@ -52,7 +52,7 @@ h1,h2,h3{font-family:var(--font-head);margin:0;line-height:1.4;}
   width:100%;
   max-width:1180px;
   margin:0 auto;
-  padding:0 24px;
+  padding:0 37.8px;
 }
 
 .icon{width:18px;height:18px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;}
@@ -81,7 +81,7 @@ h1,h2,h3{font-family:var(--font-head);margin:0;line-height:1.4;}
 }
 .header-inner{
   display:flex;align-items:center;justify-content:space-between;
-  min-height:76px;gap:20px;padding:12px 37.8px;
+  min-height:76px;gap:20px;padding-top:12px;padding-bottom:12px;
 }
 .logo{display:flex;flex-direction:column;line-height:1.15;}
 .logo-en{font-family:var(--font-head);font-weight:700;font-size:21px;color:var(--green-700);letter-spacing:.02em;}
