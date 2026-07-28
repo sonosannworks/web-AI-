@@ -81,7 +81,7 @@ h1,h2,h3{font-family:var(--font-head);margin:0;line-height:1.4;}
 }
 .header-inner{
   display:flex;align-items:center;justify-content:space-between;
-  min-height:76px;gap:20px;padding:12px 0;
+  min-height:76px;gap:20px;padding:12px 37.8px;
 }
 .logo{display:flex;flex-direction:column;line-height:1.15;}
 .logo-en{font-family:var(--font-head);font-weight:700;font-size:21px;color:var(--green-700);letter-spacing:.02em;}
