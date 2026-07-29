@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin.html
 
-Sitemap: https://sonosannworks.github.io/web-AI-/sitemap.xml
+Sitemap: https://sonosann-webai.net/sitemap.xml
