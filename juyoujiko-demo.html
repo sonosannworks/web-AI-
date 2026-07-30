@@ -33,6 +33,23 @@
   h1,h2,h3,.mincho{font-family:"Shippori Mincho", serif;}
   a{color:var(--pine-deep);}
 
+  /* ---- back bar ---- */
+  .back-bar{
+    background:var(--paper-alt);
+    border-bottom:1px solid var(--line);
+    padding:10px 20px;
+    font-size:.85rem;
+  }
+  .back-bar a{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    color:var(--pine-deep);
+    text-decoration:none;
+    font-weight:500;
+  }
+  .back-bar a:hover{text-decoration:underline;}
+
   /* ---- demo banner ---- */
   .demo-banner{
     background:var(--pine-deep);
@@ -326,6 +343,7 @@
 </head>
 <body>
 
+<div class="back-bar"><a href="index.html">← sonosann Web&amp;AIサポートに戻る</a></div>
 <div class="demo-banner">これは <strong>サンプル(見本)</strong> です。事業所名・所在地・数値はすべて架空のものです。実際のページ制作イメージとしてご覧ください。</div>
 
 <header class="masthead">
