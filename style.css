@@ -5,6 +5,8 @@
   --green:#16A97C;
   --green-light:#E3F5EC;
   --green-lighter:#F2FAF6;
+  --pink:#FF6F9C;
+  --pink-dark:#E14D7C;
   --blue:#3E7BEA;
   --blue-light:#E7F0FC;
   --orange:#F0932B;
@@ -183,14 +185,37 @@ section{padding:96px 0;}
 
 .hero-badge{
   position:absolute;right:5%;bottom:32px;
-  width:150px;height:150px;border-radius:50%;
-  background:var(--green);color:#fff;
-  display:flex;align-items:center;justify-content:center;text-align:center;
-  box-shadow:0 20px 38px -14px rgba(15,90,65,.55);
+  width:160px;height:160px;border-radius:50%;
+  background:var(--pink);color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;
+  box-shadow:0 20px 38px -14px rgba(225,77,124,.6), 0 0 0 0 rgba(255,111,156,.6);
   border:6px solid var(--bg);
   z-index:3;
+  cursor:pointer;
+  transition:transform .2s ease, box-shadow .2s ease;
+  animation:heroBadgePulse 2.2s ease-out infinite;
 }
-.hero-badge span{font-size:13px;font-weight:700;line-height:1.5;}
+.hero-badge:hover,.hero-badge:focus-visible{
+  transform:scale(1.06);
+  box-shadow:0 24px 44px -14px rgba(225,77,124,.7);
+  animation-play-state:paused;
+}
+.hero-badge-tag{
+  font-size:11px;font-weight:700;line-height:1.2;
+  background:rgba(255,255,255,.22);padding:2px 10px;border-radius:999px;
+  letter-spacing:.03em;
+}
+.hero-badge-main{font-size:12px;font-weight:700;line-height:1.4;}
+.hero-badge-cta{
+  font-size:12px;font-weight:800;line-height:1.2;
+  text-decoration:underline;text-underline-offset:2px;
+}
+
+@keyframes heroBadgePulse{
+  0%{box-shadow:0 20px 38px -14px rgba(225,77,124,.6), 0 0 0 0 rgba(255,111,156,.55);}
+  70%{box-shadow:0 20px 38px -14px rgba(225,77,124,.6), 0 0 0 16px rgba(255,111,156,0);}
+  100%{box-shadow:0 20px 38px -14px rgba(225,77,124,.6), 0 0 0 0 rgba(255,111,156,0);}
+}
 
 /* ---------- Service ---------- */
 .service-grid{
@@ -413,7 +438,10 @@ section{padding:96px 0;}
   }
   .hero-photo{object-position:right center;}
   .hero-overlay{display:none;}
-  .hero-badge{width:120px;height:120px;font-size:11px;left:16px;bottom:16px;}
+  .hero-badge{width:132px;height:132px;left:16px;bottom:16px;gap:2px;}
+  .hero-badge-tag{font-size:9.5px;padding:1px 8px;}
+  .hero-badge-main{font-size:10.5px;}
+  .hero-badge-cta{font-size:10px;}
   .hero-inner{padding-top:32px;}
 }
 
@@ -424,4 +452,5 @@ section{padding:96px 0;}
 
 @media (prefers-reduced-motion:reduce){
   *{transition:none !important; scroll-behavior:auto !important;}
+  .hero-badge{animation:none !important;}
 }
