@@ -227,6 +227,11 @@ section{padding:96px 0;}
 .service-cta:hover{background:#fff;transform:translateY(-1px);box-shadow:0 6px 16px -8px rgba(27,43,38,.25);}
 .service-cta .icon{width:14px;height:14px;flex-shrink:0;}
 
+.service-cta-stack{margin-top:auto;padding-top:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
+.service-cta-stack .service-cta{margin-top:0;padding-top:0;}
+.service-cta-secondary{background:transparent;border:1px solid rgba(27,43,38,.22);color:var(--ink);font-weight:600;}
+.service-cta-secondary:hover{background:rgba(255,255,255,.45);box-shadow:none;}
+
 .card-teal{background:var(--green-light);}
 .card-teal .service-icon{background:var(--green);}
 .card-blue{background:var(--blue-light);}
