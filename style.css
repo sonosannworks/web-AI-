@@ -7,6 +7,7 @@
   --green-lighter:#F2FAF6;
   --pink:#FF6F9C;
   --pink-dark:#E14D7C;
+  --pink-light:#FDEAF0;
   --blue:#3E7BEA;
   --blue-light:#E7F0FC;
   --orange:#F0932B;
@@ -265,6 +266,8 @@ section{padding:96px 0;}
 .card-orange .service-icon{background:var(--orange);}
 .card-purple{background:var(--purple-light);}
 .card-purple .service-icon{background:var(--purple);}
+.card-pink{background:var(--pink-light);}
+.card-pink .service-icon{background:var(--pink);}
 
 /* ---------- App example ---------- */
 .app-example{background:var(--green-lighter);}
