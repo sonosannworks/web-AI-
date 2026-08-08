@@ -18,6 +18,18 @@ function loadPartial(url, placeholderId, callback) {
 function initNav() {
   var toggle = document.getElementById("nav-toggle");
   var nav = document.getElementById("global-nav");
+  var isIndexPage = /(^|\/)(index\.html)?$/.test(window.location.pathname);
+
+  if (!isIndexPage) {
+    document.querySelectorAll(".site-header a.logo, .global-nav a").forEach(function (link) {
+      var href = link.getAttribute("href");
+      if (href === "#") {
+        link.setAttribute("href", "index.html");
+      } else if (href && href.charAt(0) === "#") {
+        link.setAttribute("href", "index.html" + href);
+      }
+    });
+  }
 
   if (!toggle || !nav) return;
 
