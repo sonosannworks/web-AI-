@@ -14,6 +14,8 @@
   --orange-light:#FDF1E1;
   --purple:#8B5FBF;
   --purple-light:#F1ECFA;
+  --indigo:#3F4EA8;
+  --indigo-light:#E9EAF7;
   --yellow:#FBC94A;
   --ink:#1B2B26;
   --ink-soft:#4B5D57;
@@ -268,6 +270,8 @@ section{padding:96px 0;}
 .card-purple .service-icon{background:var(--purple);}
 .card-pink{background:var(--pink-light);}
 .card-pink .service-icon{background:var(--pink);}
+.card-indigo{background:var(--indigo-light);}
+.card-indigo .service-icon{background:var(--indigo);}
 
 /* ---------- App example ---------- */
 .app-example{background:var(--green-lighter);}
