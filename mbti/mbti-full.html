@@ -79,7 +79,17 @@
   .btn-ghost{background:transparent; border:1.5px solid rgba(255,255,255,.25); color:var(--text-on-ink);}
   #screen-result .btn-ghost{color:var(--ink); border-color:rgba(27,26,46,.25);}
   #screen-result .btn-ghost:hover{background:rgba(27,26,46,.04);}
-  .cta-row{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;}
+  .cta-row{display:flex; justify-content:center;}
+  .prev-result-row{display:flex; justify-content:center; margin-bottom:14px;}
+  .prev-result-row .btn-ghost{font-size:13.5px; padding:12px 22px;}
+  .delete-link{display:block; text-align:center; font-size:12px; color:var(--text-muted); text-decoration:underline; background:none; border:none; cursor:pointer; margin-top:4px; padding:6px 0;}
+
+  @media print{
+    body{background:#fff !important;}
+    .screen{padding:0;}
+    .btn, .link-btn, .delete-link, .version-note, footer.disclaimer{display:none !important;}
+    .card, .result-gauges, .axis-row{box-shadow:none !important; border:1px solid #ddd;}
+  }
 
   #screen-quiz{background:var(--paper); color:var(--text-on-paper);}
   .quiz-top{margin-bottom:28px;}
@@ -145,13 +155,6 @@
     .result-gauges{padding:18px 8px;}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none !important; scroll-behavior:auto !important;}}
-
-  @media print{
-    body{background:#fff;}
-    .result-actions, #screen-intro, #screen-quiz{display:none !important;}
-    #screen-result{padding:0;}
-    .card, .result-gauges, .axis-row{box-shadow:none;}
-  }
 </style>
 </head>
 <body>
@@ -177,9 +180,12 @@
 
     <p class="version-note">3分で終わる簡易版は <a href="index.html">こちら</a></p>
 
+    <div class="prev-result-row" id="prevResultRow" style="display:none;">
+      <button class="btn btn-ghost" onclick="loadPreviousResult()">→ 前回の結果を見る（<span id="prevResultDate"></span>保存）</button>
+    </div>
+
     <div class="cta-row">
       <button class="btn btn-primary" onclick="startQuiz()">→ 診断をはじめる（約8分）</button>
-      <button class="btn btn-ghost" id="lastResultBtn" style="display:none" onclick="viewLastResult()">→ 前回の結果を見る</button>
     </div>
   </div>
 </section>
@@ -233,13 +239,13 @@
     <div class="axis-breakdown" id="axisBreakdown"></div>
 
     <div class="result-actions">
-      <button class="btn btn-ghost btn-block" id="saveResultBtn" onclick="saveResult()">→ 結果をブラウザに保存する</button>
-      <button class="btn btn-ghost btn-block" onclick="window.print()">→ PDFとして保存する</button>
       <a class="btn btn-ghost btn-block" href="docs/使い方ガイド.pdf" target="_blank" rel="noopener">→ 結果の使い方ガイドを見る</a>
+      <button class="btn btn-ghost btn-block" onclick="window.print()">→ 結果をPDFで保存</button>
       <button class="btn btn-primary btn-block" onclick="resetQuiz()">→ もう一度診断する</button>
     </div>
+    <button class="delete-link" onclick="deleteSavedResult()">この端末に保存した結果を削除する</button>
 
-    <footer class="disclaimer">本診断は正式な心理検査・職業適性の判定ではありません。人材育成・自己理解のための対話ツールとしてご利用ください。</footer>
+    <footer class="disclaimer">本診断は正式な心理検査・職業適性の判定ではありません。人材育成・自己理解のための対話ツールとしてご利用ください。結果はこの端末のブラウザ内にのみ保存され、外部には送信されません。</footer>
   </div>
 </section>
 
@@ -412,10 +418,47 @@ const TYPE_DESCRIPTIONS = {
     advice:'「このペースについて、チームのメンバーはどう感じていそうですか？」という問いかけが、周囲との足並みを確認する材料になります。'},
 };
 
+const STORAGE_KEY = 'mbti_full_result_v1';
 let current = 0;
 let answers = new Array(QUESTIONS.length).fill(null);
-let lastResult = null;
-const STORAGE_KEY = 'mbtiFullResult';
+
+function saveResultToStorage(typeCode, pct){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({typeCode, pct, savedAt: Date.now()}));
+  }catch(e){
+    console.warn('この端末では結果を保存できませんでした', e);
+  }
+}
+
+function checkPreviousResult(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    const d = new Date(data.savedAt);
+    document.getElementById('prevResultDate').textContent = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+    document.getElementById('prevResultRow').style.display = 'flex';
+  }catch(e){ /* 前回結果なし、または読み込み不可 */ }
+}
+
+function loadPreviousResult(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    renderResult(data.typeCode, data.pct);
+  }catch(e){
+    console.warn('前回の結果を読み込めませんでした', e);
+  }
+}
+
+function deleteSavedResult(){
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  const row = document.getElementById('prevResultRow');
+  if(row) row.style.display = 'none';
+  alert('この端末に保存していた結果を削除しました。');
+  resetQuiz();
+}
 
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -431,6 +474,7 @@ function startQuiz(){
 }
 
 function resetQuiz(){
+  checkPreviousResult();
   showScreen('screen-intro');
 }
 
@@ -505,14 +549,11 @@ function computeResult(){
     letters[axis] = leftPct >= 50 ? AXIS_META[axis].left : AXIS_META[axis].right;
   });
   const typeCode = letters.ei + letters.sn + letters.tf + letters.jp;
+  saveResultToStorage(typeCode, pct);
   renderResult(typeCode, pct);
 }
 
 function renderResult(typeCode, pct){
-  lastResult = {typeCode, pct};
-  const saveBtn = document.getElementById('saveResultBtn');
-  if(saveBtn) saveBtn.textContent = '→ 結果をブラウザに保存する';
-
   document.getElementById('resultTypeLetters').textContent = typeCode;
   const info = TYPE_DESCRIPTIONS[typeCode];
   document.getElementById('resultTypeName').textContent = info.name;
@@ -557,34 +598,6 @@ function renderResult(typeCode, pct){
   showScreen('screen-result');
 }
 
-function saveResult(){
-  if(!lastResult) return;
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({...lastResult, savedAt:new Date().toISOString()}));
-  }catch(e){ return; }
-  const saveBtn = document.getElementById('saveResultBtn');
-  if(saveBtn){
-    saveBtn.textContent = '✓ 保存しました';
-    setTimeout(()=>{ saveBtn.textContent = '→ 結果をブラウザに保存する'; }, 2000);
-  }
-}
-
-function loadSavedResult(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return null;
-    const data = JSON.parse(raw);
-    if(!data || !data.typeCode || !TYPE_DESCRIPTIONS[data.typeCode] || !data.pct) return null;
-    return data;
-  }catch(e){ return null; }
-}
-
-function viewLastResult(){
-  const data = loadSavedResult();
-  if(!data) return;
-  renderResult(data.typeCode, data.pct);
-}
-
 window.addEventListener('load', ()=>{
   setTimeout(()=>{
     const targets = {ei:'42%', sn:'58%', tf:'50%', jp:'65%'};
@@ -593,18 +606,7 @@ window.addEventListener('load', ()=>{
       g.querySelector('.gauge-fill').style.height = targets[axis];
     });
   }, 200);
-
-  const saved = loadSavedResult();
-  if(saved){
-    const btn = document.getElementById('lastResultBtn');
-    const savedDate = new Date(saved.savedAt);
-    if(btn){
-      btn.style.display = '';
-      if(!isNaN(savedDate)){
-        btn.textContent = `→ 前回の結果を見る（${savedDate.getMonth()+1}/${savedDate.getDate()}保存）`;
-      }
-    }
-  }
+  checkPreviousResult();
 });
 </script>
 </body>
