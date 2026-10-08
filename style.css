@@ -260,6 +260,11 @@ section{padding:96px 0;}
 .service-cta-secondary{background:transparent;border:1px solid rgba(27,43,38,.22);color:var(--ink);font-weight:600;}
 .service-cta-secondary:hover{background:rgba(255,255,255,.45);box-shadow:none;}
 
+/* ===== 8枚目:QRコードカード ===== */
+.service-qr{display:flex;justify-content:center;margin:12px 0 4px;}
+.service-qr img{width:140px;height:140px;padding:10px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+button.service-cta{border:1px solid rgba(27,43,38,.08);font:inherit;font-weight:700;font-size:13px;cursor:pointer;-webkit-appearance:none;appearance:none;}
+
 .card-teal{background:var(--green-light);}
 .card-teal .service-icon{background:var(--green);}
 .card-blue{background:var(--blue-light);}
@@ -371,6 +376,16 @@ section{padding:96px 0;}
 }
 .why-icon svg{width:24px;height:24px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;}
 .why-item p{margin:0;font-size:14px;font-weight:500;color:var(--ink);}
+.why-qr{
+  width:max-content;margin:48px auto 0;padding:24px 32px;text-align:center;
+  border-radius:var(--radius-md);background:var(--white);border:1px solid var(--line);
+}
+.why-qr img{display:block;width:150px;height:150px;margin:0 auto 14px;}
+.why-qr-title{margin:0;font-size:14px;font-weight:700;color:var(--green-900);}
+.why-qr-text{margin:4px 0 0;font-size:12.5px;color:var(--ink-soft);}
+@media (max-width:767px){
+  .why-qr{display:none;}
+}
 
 /* ---------- Footer ---------- */
 .site-footer{background:var(--green-900);color:#CFE7DC;padding:44px 0;}
@@ -436,6 +451,7 @@ section{padding:96px 0;}
 
   .service-cta-group{flex-direction:column;}
   .service-cta{width:100%;justify-content:center;padding:12px 14px;font-size:14px;}
+  button.service-cta{font-size:14px;}
 
   .hero{min-height:0;padding:0 0 56px;}
   .hero-visual{

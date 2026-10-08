@@ -50,3 +50,27 @@ document.addEventListener("DOMContentLoaded", function () {
   loadPartial("header.html", "site-header-placeholder", initNav);
   loadPartial("footer.html", "site-footer-placeholder");
 });
+
+// ===== サイト共有ボタン =====
+document.querySelectorAll('.js-share-site').forEach((btn) => {
+  const label = btn.querySelector('.js-share-label');
+  const original = label.textContent;
+  const shareData = {
+    title: 'sonosann Web&AIサポート',
+    text: '介護のDXをWeb&AIでサポート',
+    url: 'https://sonosann-webai.net/'
+  };
+  btn.addEventListener('click', async () => {
+    if (navigator.share) {
+      try { await navigator.share(shareData); } catch (e) {}
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(shareData.url);
+      label.textContent = 'コピーしました！';
+      setTimeout(() => { label.textContent = original; }, 2000);
+    } catch (e) {
+      window.prompt('このURLをコピーしてください', shareData.url);
+    }
+  });
+});
