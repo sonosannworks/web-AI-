@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#11161c">
+<title>夜勤ボイス記録</title>
+<style>
+/* Layout: sticky clock + 3 tabs (記録 / 振り返り / 設定). 記録 = input panel on top, ward bed map below. Dark-first for the night ward. */
+:root{
+  --bg:#11161c; --surface:#1a222b; --sunk:#141a21; --line:#2a3541; --fg:#e6ecf1; --muted:#8c9aa8;
+  --accent:#5cc8b4; --accent-ink:#0b1a17; --mine:#3b6f9e; --rec:#ff6b6b; --warn:#e8b45a;
+  --font:"Hiragino Sans","Noto Sans JP","Yu Gothic UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#f3f6f8; --surface:#ffffff; --sunk:#eef2f5; --line:#d7dfe5; --fg:#17212b; --muted:#5d6b78;
+  --accent:#1f8f7d; --accent-ink:#ffffff; --mine:#cfe0f0; --rec:#d64545; --warn:#a86b00; color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#f3f6f8; --surface:#ffffff; --sunk:#eef2f5; --line:#d7dfe5; --fg:#17212b; --muted:#5d6b78;
+  --accent:#1f8f7d; --accent-ink:#ffffff; --mine:#cfe0f0; --rec:#d64545; --warn:#a86b00; color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.6}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:8px;display:flex;flex-direction:column;gap:8px}
+.clock{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.clock h1{font-size:14px;margin:0;color:var(--muted);font-weight:600;letter-spacing:.05em}
+.clock .now{font-variant-numeric:tabular-nums;font-size:24px;font-weight:700}
+.clock .date{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;margin-left:8px;font-weight:400}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--sunk);border-radius:10px;padding:3px}
+.tabs button{border:none;background:transparent;color:var(--muted);font:inherit;font-size:14px;font-weight:700;padding:7px 0;border-radius:8px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--fg)}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:14px 48px}
+.pane{display:flex;flex-direction:column;gap:14px}
+.note{font-size:13px;color:var(--warn);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.card h2{font-size:15px;margin:0}
+.sub{font-size:13px;color:var(--muted);margin:0}
+.target{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.target .who{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2}
+.target .who small{display:block;font-size:12px;font-weight:400;color:var(--muted)}
+.recrow{display:flex;align-items:center;gap:14px}
+.mic{flex:none;width:72px;height:72px;border-radius:50%;border:none;background:var(--accent);color:var(--accent-ink);cursor:pointer;display:grid;place-items:center}
+.mic svg{width:30px;height:30px}
+.mic.on{background:var(--rec);color:#fff;animation:pulse 1.4s ease-in-out infinite}
+.mic:disabled{opacity:.4;cursor:not-allowed}
+@keyframes pulse{50%{box-shadow:0 0 0 10px color-mix(in srgb,var(--rec) 25%,transparent)}}
+@media (prefers-reduced-motion:reduce){.mic.on{animation:none}}
+.status{min-width:0;font-size:14px;color:var(--muted)}
+.status b{color:var(--fg)}
+.stamp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.stamp output{font-variant-numeric:tabular-nums;color:var(--fg);font-weight:700}
+textarea{width:100%;min-height:96px;resize:vertical;background:var(--sunk);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;line-height:1.6}
+.interim{color:var(--muted);font-size:14px;min-height:1.4em;margin-top:-6px}
+.label{font-size:12px;color:var(--muted);letter-spacing:.04em}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+.chip.quick{border-radius:10px;padding:9px 12px;font-weight:700;background:var(--sunk)}
+.chip.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn{border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:10px;padding:10px 14px;font:inherit;font-size:15px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.btn.small{padding:6px 10px;font-size:13px}
+.btn.danger{color:var(--rec);border-color:color-mix(in srgb,var(--rec) 50%,var(--line))}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.actions .grow{flex:1}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--sunk);border-radius:10px;padding:3px}
+.modes button{border:none;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:700;padding:7px 0;border-radius:8px;cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--surface);color:var(--fg)}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.teamrow{display:flex;flex-direction:column;gap:6px}
+.chip.team{border-radius:10px;padding:9px 14px;font-weight:700;background:var(--sunk)}
+.ward{display:flex;flex-direction:column}
+.room{display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.room:first-child{border-top:none}
+.room .no{font-weight:800;font-variant-numeric:tabular-nums;font-size:15px}
+.room .no small{display:block;font-size:11px;color:var(--muted);font-weight:400}
+.beds{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.bed{min-width:52px;height:50px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--fg);font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;padding:0 6px}
+.bed b{font-size:17px;font-variant-numeric:tabular-nums}
+.bed span{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bed.mine{background:var(--mine);border-color:var(--mine)}
+.bed.empty{opacity:.35;border-style:dashed}
+.bed.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.bed.sel span{color:var(--accent-ink)}
+.bed:disabled{cursor:not-allowed}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px;border:1px solid var(--line)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.entry{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;padding:10px 0;border-top:1px solid var(--line)}
+.entry time{font-variant-numeric:tabular-nums;font-weight:700;color:var(--accent);font-size:15px}
+.entry .body{min-width:0}
+.entry .txt{white-space:pre-wrap;word-break:break-word}
+.entry .txt[contenteditable="true"]{display:block;background:var(--sunk);border-radius:8px;padding:4px 8px;outline:1px solid var(--line)}
+.entry .ops{grid-column:2;display:flex;gap:6px;flex-wrap:wrap}
+.tag{display:inline-block;font-variant-numeric:tabular-nums;font-weight:700;font-size:13px;border:1px solid var(--line);border-radius:6px;padding:0 6px;margin-right:6px}
+.tag.q{border-color:transparent;background:var(--sunk);font-weight:400}
+.tag.k{border-color:var(--rec);color:var(--rec);font-weight:700}
+.kyuhen{border:2px solid var(--rec)}
+.kh-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.kh-title{color:var(--rec);font-weight:800;font-size:18px;letter-spacing:.04em}
+.kh-meta{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.kh-meta b{color:var(--fg);font-size:20px}
+.kh-timer{font-size:40px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--rec)}
+.kh-live{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--fg)}
+.kh-live i{width:10px;height:10px;border-radius:50%;background:var(--rec);flex:none;animation:blink 1.2s steps(2) infinite}
+.kh-live.off{color:var(--warn)}.kh-live.off i{background:var(--muted);animation:none}
+@keyframes blink{50%{opacity:.2}}
+@media (prefers-reduced-motion:reduce){.kh-live i{animation:none}}
+.kh-in{display:flex;gap:8px}
+.kh-in input{flex:1;min-width:0;background:var(--sunk);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit}
+.kh-log .entry{grid-template-columns:auto 1fr auto;align-items:start}
+.kh-log .entry time{color:var(--rec)}
+.btn.big{padding:14px;font-size:16px;font-weight:800}
+.btn.khstart{width:100%;color:var(--rec);border-color:color-mix(in srgb,var(--rec) 60%,var(--line));font-weight:700}
+.empty-msg{color:var(--muted);font-size:14px;padding:10px 0;border-top:1px solid var(--line)}
+.tally{width:100%;border-collapse:collapse;font-size:14px}
+.tally th,.tally td{text-align:left;padding:6px 8px 6px 0;border-top:1px solid var(--line);vertical-align:top}
+.tally th{font-size:12px;color:var(--muted);font-weight:400;border-top:none}
+.tally td.n{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.tally td.t{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.scroll{overflow-x:auto}
+.confirm{border:1px solid var(--rec);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:14px;font-weight:700}
+.field select{background:var(--sunk);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit}
+.mono{font-variant-numeric:tabular-nums}
+.err{color:var(--rec);font-size:13px;margin:0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 8px 8px 16px;border-radius:999px;font-size:14px;display:flex;align-items:center;gap:10px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.show{opacity:1;pointer-events:auto}
+.toast button{border:none;background:var(--bg);color:var(--fg);border-radius:999px;padding:4px 10px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="clock">
+      <h1>夜勤ボイス記録<span class="date" id="date"></span></h1>
+      <div class="now" id="now">--:--</div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button id="tab-rec" role="tab" aria-selected="true" data-tab="rec">記録</button>
+      <button id="tab-rev" role="tab" aria-selected="false" data-tab="rev">振り返り</button>
+      <button id="tab-set" role="tab" aria-selected="false" data-tab="set">設定</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="pane-rec" class="pane">
+    <section class="card kyuhen" id="kyuhenCard" aria-label="急変モード" hidden>
+      <div class="kh-head">
+        <div>
+          <div class="kh-title">急変モード</div>
+          <div class="kh-meta"><b id="khBed"></b>　開始 <span id="khStartTime"></span></div>
+        </div>
+        <div class="kh-timer" id="khTimer" aria-label="経過時間">00:00</div>
+      </div>
+      <div class="kh-live" id="khLive"><i></i><span id="khStatus"></span></div>
+      <div class="interim" id="khInterim" aria-live="polite" style="margin:0"></div>
+      <div>
+        <div class="label">ボタンで記録</div>
+        <div class="chips" id="khQuick" style="margin-top:6px"></div>
+      </div>
+      <div class="kh-in">
+        <input id="khInput" type="text" autocomplete="off" placeholder="手で入力して追加">
+        <button class="btn small" id="khAdd" type="button">追加</button>
+      </div>
+      <ol class="log kh-log" id="khLog"></ol>
+      <div class="actions">
+        <button class="btn" id="khMic" type="button" hidden>マイクを再開</button>
+        <button class="btn danger grow big" id="khEnd" type="button">急変モードを終了</button>
+      </div>
+    </section>
+
+    <section class="card" aria-label="記録の入力" id="recCard">
+      <div class="target">
+        <div class="who" id="who"></div>
+        <button class="btn small" id="unsel" type="button" hidden>全体メモにする</button>
+      </div>
+      <div>
+        <div class="label">ワンタップ記録（押すとすぐ保存）</div>
+        <div class="chips" id="quick" style="margin-top:6px"></div>
+      </div>
+      <div class="recrow">
+        <button class="mic" id="mic" type="button" aria-pressed="false" aria-label="音声入力">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+        </button>
+        <div class="status" id="status">押して話す。記録を追加すると自動で止まります</div>
+      </div>
+      <div class="stamp">記録時刻 <output id="stamp">—</output>
+        <button class="btn small" id="restamp" type="button">今の時刻にする</button>
+      </div>
+      <textarea id="draft" placeholder="話した内容がここに入ります。キーボードのマイクでも入力できます。"></textarea>
+      <div class="interim" id="interim" aria-live="polite"></div>
+      <div>
+        <div class="label">文に入れる</div>
+        <div class="chips" id="phrases" style="margin-top:6px"></div>
+      </div>
+      <div class="actions">
+        <button class="btn primary grow" id="add" type="button">記録を追加</button>
+        <button class="btn" id="clearDraft" type="button">消す</button>
+      </div>
+      <button class="btn khstart" id="khStart" type="button">急変モードを開始</button>
+    </section>
+
+    <section class="card" aria-label="病棟のベッド" id="wardCard">
+      <div class="actions" style="justify-content:space-between">
+        <h2>ベッド</h2>
+        <div class="chips" role="group" aria-label="表示範囲">
+          <button class="chip" id="scope-mine" type="button">受け持ち</button>
+          <button class="chip" id="scope-all" type="button">全床</button>
+        </div>
+      </div>
+      <div class="modes" role="group" aria-label="タップしたときの動き">
+        <button type="button" data-mode="rec" aria-pressed="true">記録する</button>
+        <button type="button" data-mode="mine" aria-pressed="false">受け持ちを選ぶ</button>
+        <button type="button" data-mode="empty" aria-pressed="false">空床にする</button>
+      </div>
+      <div class="teamrow" id="teamRow" hidden>
+        <span class="label">チームでまとめて選ぶ</span>
+        <div class="chips" id="teamBtns"></div>
+      </div>
+      <p class="hint" id="modeHint"></p>
+      <div class="ward" id="ward"></div>
+      <div class="legend"><span><i style="background:var(--mine);border-color:var(--mine)"></i>受け持ち</span><span><i style="border-style:dashed;opacity:.5"></i>空床</span><span>数字の下は最後に記録した時刻</span></div>
+    </section>
+
+    <p class="note">患者さんは名前ではなく部屋番号とベッドで指定してください。音声はGoogleの認識サービスで文字にされます。記録はこのスマホの中だけに保存されます。</p>
+  </section>
+
+  <section id="pane-rev" class="pane" hidden>
+    <section class="card">
+      <h2>ベッドで絞り込む</h2>
+      <div class="chips" id="revFilter"></div>
+    </section>
+    <section class="card">
+      <h2 id="tallyTitle">回数のまとめ</h2>
+      <div class="scroll" id="tally"></div>
+    </section>
+    <section class="card">
+      <div class="actions" style="justify-content:space-between">
+        <h2 id="logTitle">今夜の記録</h2>
+        <button class="btn small" id="copyList" type="button">表示中をコピー</button>
+      </div>
+      <ol class="log" id="log"></ol>
+    </section>
+    <section class="card">
+      <h2>勤務終了</h2>
+      <p class="sub">記録・受け持ち・空床の印をすべて消します。病棟の部屋割り設定は残ります。</p>
+      <div id="confirmBox" hidden></div>
+      <div class="actions"><button class="btn danger" id="wipe" type="button">今夜の記録を全消去</button></div>
+    </section>
+  </section>
+
+  <section id="pane-set" class="pane" hidden>
+    <section class="card">
+      <h2>病棟の部屋割り</h2>
+      <p class="sub">1行に「部屋番号:ベッド数」で入力します。個室は「:1」です。部屋の増減やベッド数の変更があれば、ここを書き換えて保存してください。</p>
+      <div class="field">
+        <label for="layoutText">部屋とベッド数</label>
+        <textarea id="layoutText" class="mono" style="min-height:220px"></textarea>
+        <p class="sub" id="layoutCount"></p>
+        <p class="err" id="layoutErr" hidden></p>
+      </div>
+      <div class="field">
+        <label for="labelStyle">ベッドの呼び方</label>
+        <select id="labelStyle">
+          <option value="num">1・2・3…</option>
+          <option value="abc">A・B・C…</option>
+        </select>
+      </div>
+    </section>
+    <section class="card">
+      <h2>チーム分け</h2>
+      <p class="sub">1行に「チーム名:部屋番号」。範囲は「-」、追加は「,」でつなぎます。例 B:301-311,323</p>
+      <div class="field">
+        <label for="teamText">チームと部屋</label>
+        <textarea id="teamText" class="mono" style="min-height:80px"></textarea>
+        <p class="sub" id="teamCount"></p>
+      </div>
+    </section>
+    <section class="card">
+      <h2>ワンタップ記録のボタン</h2>
+      <p class="sub">1行に1つ。押すとすぐ記録され、振り返りで回数が数えられます。</p>
+      <div class="field">
+        <label for="quickText">ボタンの言葉</label>
+        <textarea id="quickText" style="min-height:180px"></textarea>
+      </div>
+    </section>
+    <section class="card">
+      <h2>急変モードのボタン</h2>
+      <p class="sub">1行に1つ。急変モード中に押すと、その時刻で記録されます。</p>
+      <div class="field">
+        <label for="kyuhenText">ボタンの言葉</label>
+        <textarea id="kyuhenText" style="min-height:180px"></textarea>
+      </div>
+    </section>
+    <section class="card">
+      <h2>文に入れる言葉</h2>
+      <p class="sub">1行に1つ。押すと入力中の文の最後に足されます。</p>
+      <div class="field">
+        <label for="phraseText">言葉</label>
+        <textarea id="phraseText" style="min-height:160px"></textarea>
+      </div>
+    </section>
+    <div class="actions"><button class="btn primary grow" id="saveSettings" type="button">設定を保存</button><button class="btn" id="resetSettings" type="button">最初の状態に戻す</button></div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="toastUndo" type="button" hidden>取り消す</button></div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var K_SET='yvk.settings.v2', K_SHIFT='yvk.shift.v2', K_OLD='yakinVoiceKiroku.v1';
+  // 病棟の部屋割り（2026/10/14 聞き取り）
+  var DEF={
+    layout:'301:4\n302:4\n303:4\n305:4\n306:2\n307:2\n308:2\n310:2\n311:4\n312:5\n313:2\n315:2\n316:2\n317:2\n318:1\n320:2\n321:4\n322:2\n323:1',
+    label:'num',
+    team:'Aチーム:312-322\nBチーム:301-311,323',
+    quick:'入眠中\n覚醒あり\n体位変換\n排尿\n排便\nおむつ交換\nナースコール対応\n吸引\n疼痛の訴え\n不穏・せん妄\n点滴確認',
+    kyuhen:'胸骨圧迫開始\n胸骨圧迫交代\nアドレナリン投与\nAED装着\n除細動実施\nBVM換気\n挿管\nルート確保\n医師到着\n心拍再開\n家族へ連絡',
+    phrase:'巡視時、\n体温 ℃、\n血圧 / mmHg、\n脈拍 回/分、\nSpO2 %、\n呼吸 回/分、\n頓用薬使用、\n医師へ報告。\n経過観察とする。'
+  };
+  var S={}, shift={mine:[],empty:[],entries:[]};
+  var sel='', mode='rec', scope='mine', revBed='__all', draftTime=null;
+
+  function lines(t){return (t||'').split(/\r?\n/).map(function(s){return s.trim()}).filter(Boolean)}
+  function z2h(v){return (v||'').replace(/[！-～]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0)})}
+  function parseLayout(text){
+    var rooms=[],errs=[],seen={};
+    z2h(text).split(/[\n,、]/).forEach(function(raw){
+      var s=raw.trim();if(!s)return;
+      var m=s.match(/^(\S+?)\s*[:：\s]\s*(\d+)$/);
+      if(!m){errs.push('「'+s+'」は読み取れませんでした（例 301:4）');return}
+      var n=parseInt(m[2],10);if(n<1||n>8){errs.push(m[1]+'号室のベッド数は1〜8で入力してください');return}
+      if(seen[m[1]]){errs.push(m[1]+'号室が2回入っています');return}
+      seen[m[1]]=1;rooms.push({no:m[1],beds:n});
+    });
+    return {rooms:rooms,errs:errs};
+  }
+  // 「Aチーム:312-322」→ そのチームの部屋のベッド一覧
+  function parseTeams(text,rooms){
+    var out=[];
+    lines(z2h(text)).forEach(function(l){
+      var m=l.match(/^(.+?)[:：](.+)$/);if(!m)return;
+      var want=[];m[2].split(/[,、\s]+/).forEach(function(part){
+        var r=part.match(/^(\d+)\s*[-~〜]\s*(\d+)$/);
+        if(r){var a=+r[1],b=+r[2];rooms.forEach(function(rm){var n=+rm.no;if(n>=Math.min(a,b)&&n<=Math.max(a,b))want.push(rm.no)})}
+        else if(part)want.push(part.trim());
+      });
+      var beds=[];rooms.forEach(function(rm){if(want.indexOf(rm.no)>=0)bedLabels(rm.beds).forEach(function(lb){beds.push(bedId(rm.no,lb))})});
+      out.push({name:m[1].trim(),beds:beds});
+    });
+    return out;
+  }
+  function bedLabels(n){if(n===1)return[''];var a=[];for(var i=0;i<n;i++)a.push(S.label==='abc'?String.fromCharCode(65+i):String(i+1));return a}
+  function bedId(room,lab){return lab?room+'-'+lab:room}
+  function allBeds(){var r=[];S.rooms.forEach(function(rm){bedLabels(rm.beds).forEach(function(l){r.push(bedId(rm.no,l))})});return r}
+
+  function loadAll(){
+    var st=null;try{st=JSON.parse(localStorage.getItem(K_SET)||'null')}catch(e){}
+    S={layout:DEF.layout,label:DEF.label,team:DEF.team,quick:DEF.quick,kyuhen:DEF.kyuhen,phrase:DEF.phrase};
+    if(st)for(var k in S)if(typeof st[k]==='string')S[k]=st[k];
+    S.rooms=parseLayout(S.layout).rooms;
+    try{var sh=JSON.parse(localStorage.getItem(K_SHIFT)||'null');if(sh&&sh.entries)shift={mine:sh.mine||[],empty:sh.empty||[],entries:sh.entries,kyuhen:sh.kyuhen||null}}catch(e){}
+    try{var old=JSON.parse(localStorage.getItem(K_OLD)||'null');
+      if(old&&old.length&&!shift.entries.length){shift.entries=old.map(function(e){return{id:e.id,t:e.t,bed:e.room||'',text:e.text,kind:'voice'}});saveShift()}
+      localStorage.removeItem(K_OLD)}catch(e){}
+  }
+  function saveSet(){try{localStorage.setItem(K_SET,JSON.stringify({layout:S.layout,label:S.label,team:S.team,quick:S.quick,kyuhen:S.kyuhen,phrase:S.phrase}))}catch(e){}}
+  function saveShift(){try{localStorage.setItem(K_SHIFT,JSON.stringify(shift))}catch(e){}}
+
+  function pad(n){return String(n).padStart(2,'0')}
+  function fmtDate(d){return d.getFullYear()+'/'+pad(d.getMonth()+1)+'/'+pad(d.getDate())}
+  function fmtTime(d){return pad(d.getHours())+':'+pad(d.getMinutes())}
+  var WD=['日','月','火','水','木','金','土'];
+  function tick(){var d=new Date();$('now').textContent=fmtTime(d);$('date').textContent=fmtDate(d).slice(5)+'（'+WD[d.getDay()]+'）'}
+  tick();setInterval(tick,10000);
+
+  var toastT,undoFn=null;
+  function toast(m,undo){
+    $('toastMsg').textContent=m;undoFn=undo||null;$('toastUndo').hidden=!undo;
+    $('toast').classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){$('toast').classList.remove('show');undoFn=null},undo?5000:1800);
+  }
+  $('toastUndo').addEventListener('click',function(){if(undoFn){undoFn();undoFn=null}$('toast').classList.remove('show')});
+
+  function btn(label,fn,cls){var b=document.createElement('button');b.type='button';b.className=cls||'btn small';b.textContent=label;b.addEventListener('click',fn);return b}
+  function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+  function lastTimeMap(){var m={};shift.entries.forEach(function(e){if(e.bed&&(!m[e.bed]||e.t>m[e.bed]))m[e.bed]=e.t});return m}
+  function has(arr,v){return arr.indexOf(v)>=0}
+  function toggle(arr,v){var i=arr.indexOf(v);if(i>=0)arr.splice(i,1);else arr.push(v)}
+  function cmpBed(a,b){return a.localeCompare(b,'ja',{numeric:true})}
+
+  /* タブ */
+  document.querySelectorAll('.tabs button').forEach(function(b){b.addEventListener('click',function(){showTab(b.dataset.tab)})});
+  function showTab(t){
+    document.querySelectorAll('.tabs button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===t)});
+    ['rec','rev','set'].forEach(function(p){$('pane-'+p).hidden=p!==t});
+    if(t==='rev')renderReview();if(t==='set')fillSettings();
+    window.scrollTo(0,0);
+  }
+
+  /* 記録タブ */
+  function setStamp(d){draftTime=d;$('stamp').textContent=d?fmtTime(d):'—'}
+  function ensureStamp(){if(!draftTime)setStamp(new Date())}
+
+  function renderWho(){
+    var w=$('who');w.innerHTML='';var s=document.createElement('small');
+    if(sel){w.appendChild(document.createTextNode(sel));s.textContent=has(shift.mine,sel)?'受け持ち':'受け持ち外';$('unsel').hidden=false}
+    else{w.appendChild(document.createTextNode('全体メモ'));s.textContent='ベッドを選ぶと、その患者さんの記録になります';$('unsel').hidden=true}
+    w.appendChild(s);
+  }
+  function renderQuick(){
+    var box=$('quick');box.innerHTML='';
+    lines(S.quick).forEach(function(q){box.appendChild(btn(q,function(){quickRecord(q)},'chip quick'))});
+    var kb=$('khQuick');kb.innerHTML='';
+    lines(S.kyuhen).forEach(function(q){kb.appendChild(btn(q,function(){if(shift.kyuhen){khEntry(q);toast(fmtTime(new Date())+' '+q)}},'chip quick'))});
+    var pb=$('phrases');pb.innerHTML='';
+    lines(S.phrase).forEach(function(p){pb.appendChild(btn(p.replace(/[、。]$/,''),function(){ensureStamp();var ta=$('draft');ta.value+=p;ta.focus()},'chip'))});
+  }
+  function quickRecord(q){
+    if(!sel){toast('先にベッドを選んでください');$('wardCard').scrollIntoView({behavior:'smooth',block:'start'});return}
+    var e={id:newId(),t:Date.now(),bed:sel,text:q,kind:'quick'};
+    shift.entries.push(e);saveShift();renderWard();
+    toast(sel+'　'+fmtTime(new Date(e.t))+' '+q,function(){shift.entries=shift.entries.filter(function(x){return x.id!==e.id});saveShift();renderWard()});
+  }
+
+  function renderWard(){
+    var ward=$('ward');ward.innerHTML='';var last=lastTimeMap();
+    var mineOnly=scope==='mine'&&mode==='rec'&&shift.mine.length>0;
+    var hint={rec:shift.mine.length?'ベッドを押すと記録の対象になります。':'まだ受け持ちが選ばれていません。「受け持ちを選ぶ」で今夜の担当ベッドを押してください。',
+      mine:'押したベッドが受け持ちになります（もう一度押すと外れます）。受け持ち '+shift.mine.length+'床',
+      empty:'押したベッドが空床になり、記録の対象から外れます。空床 '+shift.empty.length+'床'}[mode];
+    $('modeHint').textContent=hint;
+    var teams=parseTeams(S.team,S.rooms),tb=$('teamBtns');tb.innerHTML='';
+    $('teamRow').hidden=!(teams.length&&(mode==='mine'||!shift.mine.length));
+    teams.forEach(function(t){
+      var on=t.beds.length&&t.beds.length===shift.mine.length&&t.beds.every(function(b){return has(shift.mine,b)});
+      tb.appendChild(btn(t.name+'（'+t.beds.length+'床）',function(){
+        shift.mine=t.beds.filter(function(b){return !has(shift.empty,b)});saveShift();
+        mode='rec';scope='mine';document.querySelectorAll('.modes button').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.mode==='rec')});
+        renderWho();renderWard();toast(t.name+'を受け持ちにしました（'+shift.mine.length+'床）');
+      },'chip team'+(on?' sel':'')));
+    });
+    if(shift.mine.length&&mode==='mine')tb.appendChild(btn('受け持ちを全部外す',function(){shift.mine=[];saveShift();renderWho();renderWard()},'chip'));
+    $('scope-mine').classList.toggle('sel',scope==='mine');$('scope-all').classList.toggle('sel',scope==='all');
+    if(!S.rooms.length){var p=document.createElement('p');p.className='hint';p.textContent='部屋割りが未設定です。設定タブで入力してください。';ward.appendChild(p);return}
+    S.rooms.forEach(function(rm){
+      var labs=bedLabels(rm.beds).filter(function(l){return !mineOnly||has(shift.mine,bedId(rm.no,l))});
+      if(!labs.length)return;
+      var row=document.createElement('div');row.className='room';
+      var no=document.createElement('div');no.className='no';no.textContent=rm.no;
+      var sm=document.createElement('small');sm.textContent=rm.beds===1?'個室':rm.beds+'床';no.appendChild(sm);
+      var beds=document.createElement('div');beds.className='beds';
+      labs.forEach(function(l){
+        var id=bedId(rm.no,l);var b=document.createElement('button');b.type='button';b.className='bed';
+        if(has(shift.mine,id))b.classList.add('mine');
+        if(has(shift.empty,id))b.classList.add('empty');
+        if(sel===id)b.classList.add('sel');
+        var bl=document.createElement('b');bl.textContent=l||'個';var sp=document.createElement('span');sp.textContent=last[id]?fmtTime(new Date(last[id])):'—';
+        b.append(bl,sp);b.setAttribute('aria-label',id+(has(shift.empty,id)?' 空床':'')+(last[id]?' 最終記録'+fmtTime(new Date(last[id])):''));
+        if(mode==='rec'&&has(shift.empty,id))b.disabled=true;
+        b.addEventListener('click',function(){
+          if(mode==='rec'){sel=(sel===id?'':id);renderWho();renderWard();if(sel)window.scrollTo({top:0,behavior:'smooth'})}
+          else if(mode==='mine'){toggle(shift.mine,id);saveShift();renderWard()}
+          else{toggle(shift.empty,id);if(has(shift.empty,id)&&sel===id){sel='';renderWho()}saveShift();renderWard()}
+        });
+        beds.appendChild(b);
+      });
+      row.append(no,beds);ward.appendChild(row);
+    });
+  }
+  document.querySelectorAll('.modes button').forEach(function(b){b.addEventListener('click',function(){
+    mode=b.dataset.mode;document.querySelectorAll('.modes button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});renderWard();
+  })});
+  $('scope-mine').addEventListener('click',function(){scope='mine';renderWard()});
+  $('scope-all').addEventListener('click',function(){scope='all';renderWard()});
+  $('unsel').addEventListener('click',function(){sel='';renderWho();renderWard()});
+
+  $('draft').addEventListener('input',function(){if(this.value.trim())ensureStamp()});
+  $('restamp').addEventListener('click',function(){setStamp(new Date())});
+  $('clearDraft').addEventListener('click',function(){$('draft').value='';$('interim').textContent='';setStamp(null)});
+  $('add').addEventListener('click',function(){
+    var pending=$('interim').textContent.trim();
+    stopMic();
+    var text=($('draft').value.trim()+(pending?($('draft').value.trim()?'、':'')+pending:'')).trim();
+    if(!text){toast('文字が入っていません');return}
+    var e={id:newId(),t:(draftTime||new Date()).getTime(),bed:sel,text:text,kind:'voice'};
+    shift.entries.push(e);saveShift();
+    $('draft').value='';$('interim').textContent='';setStamp(null);renderWard();
+    toast((sel||'全体メモ')+' に保存しました',function(){shift.entries=shift.entries.filter(function(x){return x.id!==e.id});$('draft').value=text;setStamp(new Date(e.t));saveShift();renderWard()});
+  });
+
+  /* 音声認識 */
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition,rec=null,listening=false,wantOn=false,lastHeard=0,wakeLock=null;
+  function setUI(on){listening=on;$('mic').classList.toggle('on',on);$('mic').setAttribute('aria-pressed',on);
+    $('status').innerHTML=on?'<b>聞き取り中…</b> もう一度押すと止まります':'押して話す。記録を追加すると自動で止まります';khStatus()}
+  function stopMic(){if(rec&&(listening||wantOn)){wantOn=false;try{rec.stop()}catch(e){}setUI(false);releaseWake()}}
+  if(!SR){
+    $('status').textContent='このブラウザは音声ボタンに未対応です。キーボードのマイクで入力してください（AndroidはChrome、iPhoneはSafari）';
+    $('mic').disabled=true;
+  }else{
+    rec=new SR();rec.lang='ja-JP';rec.continuous=true;rec.interimResults=true;
+    rec.onresult=function(ev){
+      lastHeard=Date.now();var interim='';
+      for(var i=ev.resultIndex;i<ev.results.length;i++){
+        var r=ev.results[i];
+        if(r.isFinal){
+          var said=r[0].transcript.trim();if(!said)continue;
+          if(shift.kyuhen)khEntry(said);
+          else{var ta=$('draft');ta.value+=(ta.value&&!/[、。\s]$/.test(ta.value)?'、':'')+said}
+        }
+        else interim+=r[0].transcript;
+      }
+      $(shift.kyuhen?'khInterim':'interim').textContent=interim;
+    };
+    rec.onerror=function(ev){
+      if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){wantOn=false;toast('マイクの使用が許可されていません')}
+      else if(ev.error==='network'){wantOn=false;toast('通信できないため音声認識が使えません')}
+    };
+    rec.onend=function(){if(wantOn){try{rec.start();return}catch(e){}}setUI(false);releaseWake()};
+    $('mic').addEventListener('click',function(){
+      if(listening||wantOn){stopMic();return}
+      ensureStamp();wantOn=true;lastHeard=Date.now();
+      try{rec.start();setUI(true);requestWake()}catch(e){wantOn=false;toast('開始できませんでした。もう一度押してください')}
+    });
+    // 90秒声がなければ自動で切る（周りの会話を拾い続けないため）
+    setInterval(function(){if(wantOn&&!shift.kyuhen&&Date.now()-lastHeard>90000){stopMic();toast('しばらく声がなかったのでマイクを切りました')}},5000);
+  }
+  function requestWake(){try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(function(w){wakeLock=w},function(){})}catch(e){}}
+  function releaseWake(){try{if(wakeLock){wakeLock.release();wakeLock=null}}catch(e){}}
+
+  /* 急変モード：マイクを入れたまま、ひと言ごとに時刻つきで記録 */
+  function fmtDur(ms){var s=Math.max(0,Math.floor(ms/1000)),m=Math.floor(s/60);return m>=60?Math.floor(m/60)+'時間'+(m%60)+'分':m+'分'+pad(s%60)+'秒'}
+  function khEntry(text){
+    var e={id:newId(),t:Date.now(),bed:shift.kyuhen.bed,text:text,kind:'kyuhen',ev:shift.kyuhen.id};
+    shift.entries.push(e);saveShift();renderKh();return e;
+  }
+  function khStatus(){
+    if(!shift.kyuhen)return;
+    var live=listening||wantOn;
+    $('khLive').classList.toggle('off',!live);
+    $('khStatus').textContent=!SR?'このブラウザは音声ボタンに未対応です。ボタンと手入力で記録してください':(live?'聞き取り中。話すたびに時刻つきで記録されます':'マイクが止まっています。「マイクを再開」を押してください');
+    $('khMic').hidden=!SR||live;
+  }
+  function khMicOn(){
+    if(!SR)return;wantOn=true;lastHeard=Date.now();
+    if(!listening){try{rec.start();setUI(true)}catch(e){setUI(listening)}}
+    requestWake();khStatus();
+  }
+  function renderKh(){
+    var on=!!shift.kyuhen;
+    $('kyuhenCard').hidden=!on;$('recCard').hidden=on;$('wardCard').hidden=on;
+    if(!on)return;
+    var k=shift.kyuhen;$('khBed').textContent=k.bed||'全体';$('khStartTime').textContent=fmtTime(new Date(k.start));
+    tickKh();khStatus();
+    var log=$('khLog');log.innerHTML='';
+    shift.entries.filter(function(e){return e.ev===k.id}).sort(function(a,b){return b.t-a.t}).forEach(function(e){
+      var li=document.createElement('li');li.className='entry';
+      var tm=document.createElement('time');tm.textContent=fmtTime(new Date(e.t));
+      var tx=document.createElement('div');tx.className='txt';tx.textContent=e.text;
+      var del=btn('削除',function(){var i=shift.entries.indexOf(e);if(i>=0)shift.entries.splice(i,1);saveShift();renderKh()});del.classList.add('danger');
+      li.append(tm,tx,del);log.appendChild(li);
+    });
+  }
+  function tickKh(){if(shift.kyuhen){var ms=Date.now()-shift.kyuhen.start,s=Math.floor(ms/1000);$('khTimer').textContent=(s>=3600?Math.floor(s/3600)+':':'')+pad(Math.floor(s/60)%60)+':'+pad(s%60)}}
+  setInterval(tickKh,1000);
+  $('khStart').addEventListener('click',function(){
+    if(shift.kyuhen)return;
+    var pending=$('draft').value.trim();
+    shift.kyuhen={id:newId(),start:Date.now(),bed:sel};saveShift();
+    khEntry('急変対応 開始');
+    if(pending){khEntry(pending);$('draft').value='';setStamp(null)}
+    $('interim').textContent='';
+    renderKh();khMicOn();window.scrollTo(0,0);
+  });
+  $('khMic').addEventListener('click',khMicOn);
+  function khAddTyped(){var v=$('khInput').value.trim();if(!v)return;khEntry(v);$('khInput').value=''}
+  $('khAdd').addEventListener('click',khAddTyped);
+  $('khInput').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.isComposing){e.preventDefault();khAddTyped()}});
+  var khEndArmed=null;
+  $('khEnd').addEventListener('click',function(){
+    if(!khEndArmed){$('khEnd').textContent='もう一度押すと終了します';khEndArmed=setTimeout(function(){khEndArmed=null;$('khEnd').textContent='急変モードを終了'},3000);return}
+    clearTimeout(khEndArmed);khEndArmed=null;$('khEnd').textContent='急変モードを終了';
+    var dur=Date.now()-shift.kyuhen.start;
+    khEntry('急変対応 終了（所要 '+fmtDur(dur)+'）');
+    stopMic();$('khInterim').textContent='';
+    var b=shift.kyuhen.bed;shift.kyuhen=null;saveShift();
+    renderKh();renderWard();toast((b||'全体')+' の急変記録を保存しました（'+fmtDur(dur)+'）');
+  });
+
+  /* 振り返り */
+  function filtered(){return shift.entries.filter(function(e){return revBed==='__all'||(revBed==='__kyuhen'?e.kind==='kyuhen':revBed==='__none'?!e.bed:e.bed===revBed)}).sort(function(a,b){return a.t-b.t})}
+  function lineOf(e,withBed){var d=new Date(e.t);return fmtDate(d)+' '+fmtTime(d)+' '+(withBed&&e.bed?'【'+e.bed+'】':'')+e.text}
+  function renderReview(){
+    var beds={},hasNone=false;shift.entries.forEach(function(e){if(e.bed)beds[e.bed]=1;else hasNone=true});
+    var list=Object.keys(beds).sort(cmpBed);
+    if(revBed!=='__all'&&revBed!=='__none'&&!beds[revBed])revBed='__all';
+    if(revBed==='__none'&&!hasNone)revBed='__all';
+    if(revBed==='__kyuhen'&&!shift.entries.some(function(e){return e.kind==='kyuhen'}))revBed='__all';
+    var fb=$('revFilter');fb.innerHTML='';
+    var opts=[['__all','すべて']].concat(list.map(function(b){return[b,b]}));if(hasNone)opts.push(['__none','全体メモ']);if(shift.entries.some(function(e){return e.kind==='kyuhen'}))opts.push(['__kyuhen','急変の記録']);
+    opts.forEach(function(o){var b=btn(o[1],function(){revBed=o[0];renderReview()},'chip'+(revBed===o[0]?' sel':''));b.setAttribute('aria-pressed',revBed===o[0]);fb.appendChild(b)});
+    if(opts.length===1){var p=document.createElement('p');p.className='sub';p.textContent='記録があるベッドがここに並びます。';fb.appendChild(p)}
+
+    var qs=lines(S.quick),tally=$('tally');tally.innerHTML='';
+    var byBed={};filtered().forEach(function(e){if(e.kind!=='quick'||!e.bed)return;(byBed[e.bed]=byBed[e.bed]||{})[e.text]=(byBed[e.bed][e.text]||0)+1});
+    var bedKeys=Object.keys(byBed).sort(cmpBed);
+    $('tallyTitle').textContent=(revBed==='__all'||revBed==='__kyuhen')?'回数のまとめ（ワンタップ記録）':revBed+' の回数';
+    if(!bedKeys.length){var pp=document.createElement('p');pp.className='sub';pp.textContent='ワンタップ記録を使うと、ベッドごとの回数がここに出ます。';tally.appendChild(pp)}
+    else{
+      var last=lastTimeMap();var t=document.createElement('table');t.className='tally';
+      t.innerHTML='<thead><tr><th>ベッド</th><th>内容と回数</th><th>最終</th></tr></thead>';var tb=document.createElement('tbody');
+      function rank(k){var i=qs.indexOf(k);return i<0?999:i}
+      bedKeys.forEach(function(b){
+        var tr=document.createElement('tr');var c=byBed[b];
+        var items=Object.keys(c).sort(function(x,y){return rank(x)-rank(y)}).map(function(k){return k+' '+c[k]+'回'}).join('・');
+        tr.innerHTML='<td class="n"></td><td></td><td class="t"></td>';
+        tr.children[0].textContent=b;tr.children[1].textContent=items;tr.children[2].textContent=last[b]?fmtTime(new Date(last[b])):'';
+        tb.appendChild(tr)});
+      t.appendChild(tb);tally.appendChild(t);
+    }
+
+    var log=$('log');log.innerHTML='';var items=filtered();var withBed=revBed==='__all'||revBed==='__kyuhen';
+    $('logTitle').textContent=(revBed==='__all'?'今夜の記録':revBed==='__kyuhen'?'急変の記録':(revBed==='__none'?'全体メモ':revBed+' の記録'))+'　'+items.length+'件';
+    if(!items.length){var li=document.createElement('li');li.className='empty-msg';li.textContent='まだ記録はありません。記録タブでベッドを選んで、ワンタップ記録か音声で残してください。';log.appendChild(li);return}
+    items.forEach(function(e){
+      var li=document.createElement('li');li.className='entry';
+      var tm=document.createElement('time');var d=new Date(e.t);tm.textContent=fmtTime(d);tm.title=fmtDate(d);
+      var body=document.createElement('div');body.className='body';
+      if(withBed){var tg=document.createElement('span');tg.className='tag';tg.textContent=e.bed||'全体';body.appendChild(tg)}
+      if(e.kind==='quick'){var q=document.createElement('span');q.className='tag q';q.textContent='ワンタップ';body.appendChild(q)}
+      if(e.kind==='kyuhen'){var kq=document.createElement('span');kq.className='tag k';kq.textContent='急変';body.appendChild(kq)}
+      var tx=document.createElement('span');tx.className='txt';tx.textContent=e.text;body.appendChild(tx);
+      var ops=document.createElement('div');ops.className='ops';
+      var ed=btn('修正',function(){
+        if(tx.getAttribute('contenteditable')==='true'){var v=tx.textContent.trim();if(v){e.text=v;saveShift();toast('修正しました')}renderReview()}
+        else{tx.setAttribute('contenteditable','true');tx.focus();ed.textContent='保存'}
+      });
+      var del=btn('削除',function(){var i=shift.entries.indexOf(e);if(i>=0)shift.entries.splice(i,1);saveShift();renderReview();renderWard();
+        toast('削除しました',function(){shift.entries.push(e);saveShift();renderReview();renderWard()})});del.classList.add('danger');
+      ops.append(ed,del);li.append(tm,body,ops);log.appendChild(li);
+    });
+  }
+  $('copyList').addEventListener('click',function(){
+    var items=filtered();if(!items.length){toast('記録がありません');return}
+    var text=items.map(function(e){return lineOf(e,revBed==='__all')}).join('\n');
+    function fb(){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('コピーしました')}catch(e){toast('コピーできませんでした')}ta.remove()}
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(function(){toast('コピーしました')},fb);else fb();
+  });
+  $('wipe').addEventListener('click',function(){
+    var box=$('confirmBox');box.hidden=false;box.className='confirm';box.innerHTML='';
+    var m=document.createElement('div');m.textContent='今夜の記録 '+shift.entries.length+'件と、受け持ち・空床の印を消します。元には戻せません。';box.appendChild(m);
+    var row=document.createElement('div');row.className='actions';
+    var yes=btn('すべて消す',function(){stopMic();shift={mine:[],empty:[],entries:[],kyuhen:null};renderKh();sel='';revBed='__all';saveShift();box.hidden=true;renderWho();renderWard();renderReview();toast('消去しました')});yes.classList.add('danger');
+    row.append(yes,btn('やめる',function(){box.hidden=true}));box.appendChild(row);
+  });
+
+  /* 設定 */
+  function fillSettings(){$('teamText').value=S.team;$('layoutText').value=S.layout;$('labelStyle').value=S.label;$('quickText').value=S.quick;$('kyuhenText').value=S.kyuhen;$('phraseText').value=S.phrase;checkLayout()}
+  function checkLayout(){
+    var r=parseLayout($('layoutText').value);var n=r.rooms.reduce(function(s,x){return s+x.beds},0);
+    $('layoutCount').textContent=r.rooms.length+'部屋・合計'+n+'床';
+    $('layoutErr').hidden=!r.errs.length;$('layoutErr').textContent=r.errs.join(' / ');
+    var keep=S.label;S.label=$('labelStyle').value||keep;
+    $('teamCount').textContent=parseTeams($('teamText').value,r.rooms).map(function(t){return t.name+' '+t.beds.length+'床'}).join('・');
+    S.label=keep;return r;
+  }
+  $('layoutText').addEventListener('input',checkLayout);$('teamText').addEventListener('input',checkLayout);
+  $('saveSettings').addEventListener('click',function(){
+    var r=checkLayout();if(r.errs.length){toast('部屋割りに直すところがあります');return}
+    var labelChanged=S.label!==$('labelStyle').value;
+    S.layout=$('layoutText').value.trim();S.team=$('teamText').value;S.label=$('labelStyle').value;S.quick=$('quickText').value;S.kyuhen=$('kyuhenText').value;S.phrase=$('phraseText').value;S.rooms=r.rooms;
+    var valid=allBeds();shift.mine=shift.mine.filter(function(b){return has(valid,b)});shift.empty=shift.empty.filter(function(b){return has(valid,b)});
+    if(sel&&!has(valid,sel))sel='';
+    saveSet();saveShift();renderQuick();renderWho();renderWard();
+    toast(labelChanged&&shift.entries.length?'保存しました（呼び方の変更は今後の記録から）':'保存しました');
+  });
+  $('resetSettings').addEventListener('click',function(){$('teamText').value=DEF.team;$('layoutText').value=DEF.layout;$('labelStyle').value=DEF.label;$('quickText').value=DEF.quick;$('kyuhenText').value=DEF.kyuhen;$('phraseText').value=DEF.phrase;checkLayout();toast('「設定を保存」で確定します')});
+
+  loadAll();renderQuick();renderWho();renderWard();setStamp(null);renderKh();
+  if(shift.kyuhen)khStatus();
+})();
+</script>
+</body>
+</html>
