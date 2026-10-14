@@ -210,7 +210,7 @@ textarea{width:100%;min-height:96px;resize:vertical;background:var(--sunk);color
         <button class="mic" id="mic" type="button" aria-pressed="false" aria-label="音声入力">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
         </button>
-        <div class="status" id="status">押して話す。記録を追加すると自動で止まります</div>
+        <div class="status" id="status">押して話す。記録を追加するか、別のベッドを押すと保存されます</div>
       </div>
       <div class="stamp">記録時刻 <output id="stamp">—</output>
         <button class="btn small" id="restamp" type="button">今の時刻にする</button>
@@ -401,6 +401,7 @@ textarea{width:100%;min-height:96px;resize:vertical;background:var(--sunk);color
   function showTab(t){
     document.querySelectorAll('.tabs button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===t)});
     ['rec','rev','set'].forEach(function(p){$('pane-'+p).hidden=p!==t});
+    if(t!=='rec')saveDraft(true);
     if(t==='rev')renderReview();if(t==='set')fillSettings();
     window.scrollTo(0,0);
   }
@@ -466,7 +467,7 @@ textarea{width:100%;min-height:96px;resize:vertical;background:var(--sunk);color
         b.append(bl,sp);b.setAttribute('aria-label',id+(has(shift.empty,id)?' 空床':'')+(last[id]?' 最終記録'+fmtTime(new Date(last[id])):''));
         if(mode==='rec'&&has(shift.empty,id))b.disabled=true;
         b.addEventListener('click',function(){
-          if(mode==='rec'){sel=(sel===id?'':id);renderWho();renderWard();if(sel)$('recCard').scrollIntoView({behavior:'smooth',block:'start'})}
+          if(mode==='rec'){saveDraft(true);sel=(sel===id?'':id);renderWho();renderWard();if(sel)$('recCard').scrollIntoView({behavior:'smooth',block:'start'})}
           else if(mode==='mine'){toggle(shift.mine,id);saveShift();renderWard()}
           else{toggle(shift.empty,id);if(has(shift.empty,id)&&sel===id){sel='';renderWho()}saveShift();renderWard()}
         });
@@ -480,26 +481,39 @@ textarea{width:100%;min-height:96px;resize:vertical;background:var(--sunk);color
   })});
   $('scope-mine').addEventListener('click',function(){scope='mine';renderWard()});
   $('scope-all').addEventListener('click',function(){scope='all';renderWard()});
-  $('unsel').addEventListener('click',function(){sel='';renderWho();renderWard()});
+  $('unsel').addEventListener('click',function(){saveDraft(true);sel='';renderWho();renderWard()});
 
   $('draft').addEventListener('input',function(){if(this.value.trim())ensureStamp()});
   $('restamp').addEventListener('click',function(){setStamp(new Date())});
   $('clearDraft').addEventListener('click',function(){stopMic();$('draft').value='';$('interim').textContent='';setStamp(null)});
-  $('add').addEventListener('click',function(){
+  // 入力中の文を、今選んでいるベッドに保存する（ボタン・ベッド切替・画面を離れたとき共通）
+  function saveDraft(auto){
+    if(shift.kyuhen)return false;
     var pending=$('interim').textContent.trim();
     stopMic();
-    var text=($('draft').value.trim()+(pending?($('draft').value.trim()?'、':'')+pending:'')).trim();
-    if(!text){toast('文字が入っていません');return}
+    var base=$('draft').value.trim();
+    var text=(base+(pending?(base?'、':'')+pending:'')).trim();
+    if(!text){if(!auto)toast('文字が入っていません');return false}
     var e={id:newId(),t:(draftTime||new Date()).getTime(),bed:sel,text:text,kind:'voice'};
     shift.entries.push(e);saveShift();
     $('draft').value='';$('interim').textContent='';setStamp(null);renderWard();
-    toast((sel||'全体メモ')+' に保存しました',function(){shift.entries=shift.entries.filter(function(x){return x.id!==e.id});$('draft').value=text;setStamp(new Date(e.t));saveShift();renderWard()});
-  });
+    // 取り消すと文が入力欄に戻る。そのとき選んでいるベッドで「記録を追加」すれば付け替えられる
+    toast((sel||'全体メモ')+' に'+(auto?'自動で':'')+'保存しました',function(){
+      shift.entries=shift.entries.filter(function(x){return x.id!==e.id});
+      $('draft').value=text;setStamp(new Date(e.t));saveShift();renderWard();
+      if(!$('pane-rec').hidden)$('recCard').scrollIntoView({behavior:'smooth',block:'start'});
+    });
+    return true;
+  }
+  $('add').addEventListener('click',function(){saveDraft(false)});
+  // 画面を消した・ほかのアプリに切り替えたときも保存
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')saveDraft(true)});
+  window.addEventListener('pagehide',function(){saveDraft(true)});
 
   /* 音声認識 */
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition,rec=null,listening=false,wantOn=false,lastHeard=0,wakeLock=null;
   function setUI(on){listening=on;$('mic').classList.toggle('on',on);$('mic').setAttribute('aria-pressed',on);
-    $('status').innerHTML=on?'<b>聞き取り中…</b> もう一度押すと止まります':'押して話す。記録を追加すると自動で止まります';khStatus()}
+    $('status').innerHTML=on?'<b>聞き取り中…</b> もう一度押すと止まります':'押して話す。記録を追加するか、別のベッドを押すと保存されます';khStatus()}
   function stopMic(){if(rec&&(listening||wantOn)){wantOn=false;try{rec.stop()}catch(e){}setUI(false);releaseWake()}}
   if(!SR){
     $('status').textContent='このブラウザは音声ボタンに未対応です。キーボードのマイクで入力してください（AndroidはChrome、iPhoneはSafari）';
