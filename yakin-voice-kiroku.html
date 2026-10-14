@@ -484,7 +484,7 @@ textarea{width:100%;min-height:96px;resize:vertical;background:var(--sunk);color
 
   $('draft').addEventListener('input',function(){if(this.value.trim())ensureStamp()});
   $('restamp').addEventListener('click',function(){setStamp(new Date())});
-  $('clearDraft').addEventListener('click',function(){$('draft').value='';$('interim').textContent='';setStamp(null)});
+  $('clearDraft').addEventListener('click',function(){stopMic();$('draft').value='';$('interim').textContent='';setStamp(null)});
   $('add').addEventListener('click',function(){
     var pending=$('interim').textContent.trim();
     stopMic();
@@ -505,18 +505,30 @@ textarea{width:100%;min-height:96px;resize:vertical;background:var(--sunk);color
     $('status').textContent='このブラウザは音声ボタンに未対応です。キーボードのマイクで入力してください（AndroidはChrome、iPhoneはSafari）';
     $('mic').disabled=true;
   }else{
-    rec=new SR();rec.lang='ja-JP';rec.continuous=true;rec.interimResults=true;
+    // Androidのブラウザは「続けて聞く」設定だと同じ言葉を何度も返すことがあるため、
+    // 1回話すごとに区切って聞き直す方式にする
+    var isAndroid=/Android/i.test(navigator.userAgent);
+    rec=new SR();rec.lang='ja-JP';rec.continuous=!isAndroid;rec.interimResults=true;
+    var sessBase='',sessLogged=0,lastFinal='',lastFinalAt=0;
+    rec.onstart=function(){sessBase=$('draft').value;sessLogged=0};
+    function joinText(a,b){a=a||'';b=b||'';if(!a)return b;if(!b)return a;return a+(/[、。\s]$/.test(a)?'':'、')+b}
     rec.onresult=function(ev){
-      lastHeard=Date.now();var interim='';
-      for(var i=ev.resultIndex;i<ev.results.length;i++){
-        var r=ev.results[i];
-        if(r.isFinal){
-          var said=r[0].transcript.trim();if(!said)continue;
-          if(shift.kyuhen)khEntry(said);
-          else{var ta=$('draft');ta.value+=(ta.value&&!/[、。\s]$/.test(ta.value)?'、':'')+said}
-        }
-        else interim+=r[0].transcript;
+      if(!wantOn)return; // 止めた後に遅れて届いた結果は使わない（消した文が戻らないように）
+      lastHeard=Date.now();var finals=[],interim='';
+      // 毎回、このセッションの結果全体から組み立て直す（同じ結果が重ねて届いても二重にならない）
+      for(var i=0;i<ev.results.length;i++){
+        var r=ev.results[i],t=r[0].transcript.trim();
+        if(r.isFinal){if(t)finals.push(t)}else interim+=r[0].transcript;
       }
+      // 直前とまったく同じ文が2秒以内に来たら重複とみなす
+      if(finals.length&&sessLogged===0&&finals[0]===lastFinal&&Date.now()-lastFinalAt<2000)finals.shift();
+      if(shift.kyuhen){
+        for(var k=sessLogged;k<finals.length;k++)khEntry(finals[k]);
+      }else{
+        $('draft').value=finals.reduce(joinText,sessBase);
+      }
+      if(finals.length>sessLogged){lastFinal=finals[finals.length-1];lastFinalAt=Date.now()}
+      sessLogged=Math.max(sessLogged,finals.length);
       $(shift.kyuhen?'khInterim':'interim').textContent=interim;
     };
     rec.onerror=function(ev){
