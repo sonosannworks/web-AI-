@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地域のお困りごとサポート検索</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#f97316', // オレンジ
+                        secondary: '#10b981', // グリーン
+                        background: '#f3f4f6',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif; background-color: #f3f4f6; }
+        .category-btn { transition: all 0.2s ease; }
+        .category-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .category-btn.active { border-color: #f97316; background-color: #fff7ed; }
+    </style>
+</head>
+<body class="text-gray-800 pb-20">
+
+    <!-- ヘッダー -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-lg font-bold text-gray-800"><i class="fas fa-hands-helping text-primary mr-2"></i>サポートナビ〇〇市</h1>
+            <button class="text-gray-500 hover:text-primary"><i class="fas fa-bars text-xl"></i></button>
+        </div>
+        <div class="bg-orange-50 px-4 py-2 text-xs text-orange-800 border-b border-orange-100">
+            ケアマネジャー様・ご家族様向け：保険外サービスの検索ツール
+        </div>
+        <div class="bg-yellow-100 px-4 py-2 text-xs font-bold text-yellow-900 text-center border-b border-yellow-200">
+            ※これはデモ版です。掲載している情報はすべて架空のものです
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 py-6">
+        <!-- お知らせセクション（追加） -->
+        <section class="mb-6 bg-blue-50 border border-blue-100 rounded-xl p-4 shadow-sm">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-sm font-bold text-blue-800"><i class="fas fa-bullhorn mr-2"></i>コーディネーターからのお知らせ</h2>
+                <span class="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full">New</span>
+            </div>
+            <ul class="text-xs text-blue-800 space-y-2">
+                <li class="flex items-start"><span class="mr-1 text-blue-500">▶</span>【募集】秋の落ち葉拾い・お庭清掃ボランティアを募集中です！</li>
+                <li class="flex items-start"><span class="mr-1 text-blue-500">▶</span>【更新】移動スーパー「〇〇号」の最新ルートを反映しました。</li>
+            </ul>
+        </section>
+
+        <!-- 検索セクション -->
+        <section class="mb-8">
+            <h2 class="text-md font-bold mb-4 text-gray-700">どんな事でお困りですか？</h2>
+            
+            <div class="grid grid-cols-3 gap-3" id="category-container">
+                <!-- カテゴリボタンがJSで生成されます -->
+            </div>
+        </section>
+
+        <!-- 結果表示セクション -->
+        <section>
+            <div class="flex justify-between items-end mb-4">
+                <h2 class="text-md font-bold text-gray-700" id="result-title">おすすめのサービス</h2>
+                <span class="text-xs text-gray-500" id="result-count">全件表示</span>
+            </div>
+            
+            <div id="service-list" class="space-y-4">
+                <!-- サービスカードがJSで生成されます -->
+            </div>
+            
+            <div id="empty-state" class="hidden text-center py-10 bg-white rounded-xl border border-gray-200">
+                <i class="fas fa-search text-4xl text-gray-300 mb-3"></i>
+                <p class="text-gray-500 text-sm">該当するサービスが見つかりませんでした。</p>
+            </div>
+        </section>
+
+        <!-- 意見収集・情報提供セクション（追加） -->
+        <section class="mt-10 mb-4 border-t border-gray-200 pt-6">
+            <h2 class="text-sm font-bold mb-3 text-gray-700 text-center">地域の情報をお寄せください</h2>
+            <div class="flex flex-col gap-3">
+                <button onclick="alert('Googleフォームが開きます：地域の新規サービス・ボランティア登録窓口')" class="w-full bg-white border-2 border-secondary text-secondary font-bold py-3 rounded-xl shadow-sm flex items-center justify-center hover:bg-green-50 transition">
+                    <i class="fas fa-plus-circle mr-2 text-lg"></i>新しい支援団体・サービスを登録する
+                </button>
+                <button onclick="alert('Googleフォームが開きます：困りごと・ご意見箱')" class="w-full bg-white border border-gray-300 text-gray-600 font-bold py-3 rounded-xl shadow-sm flex items-center justify-center hover:bg-gray-50 transition">
+                    <i class="far fa-comment-dots mr-2 text-lg"></i>サービスに関するご意見・困りごと箱
+                </button>
+            </div>
+            <p class="text-[10px] text-gray-400 text-center mt-3 leading-relaxed">
+                ※いただいた情報は〇〇市の生活支援コーディネーターに送信されます（※デモのため実際には送信されません）
+            </p>
+        </section>
+    </main>
+
+    <!-- ボトムナビゲーション -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 max-w-md left-1/2 transform -translate-x-1/2 z-50">
+        <div class="flex justify-around">
+            <button class="flex flex-col items-center py-3 text-primary w-1/3">
+                <i class="fas fa-search mb-1"></i>
+                <span class="text-[10px]">探す</span>
+            </button>
+            <button class="flex flex-col items-center py-3 text-gray-400 hover:text-gray-600 w-1/3" onclick="alert('相談窓口の一覧画面が開きます（モック）')">
+                <i class="fas fa-phone-alt mb-1"></i>
+                <span class="text-[10px]">相談する</span>
+            </button>
+            <button class="flex flex-col items-center py-3 text-gray-400 hover:text-gray-600 w-1/3" onclick="alert('お気に入り一覧が開きます（モック）')">
+                <i class="far fa-star mb-1"></i>
+                <span class="text-[10px]">お気に入り</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // カテゴリマスターデータ
+        const categories = [
+            { id: 'garbage', name: 'ゴミ出し', icon: 'fa-trash-alt' },
+            { id: 'yard', name: '草むしり', icon: 'fa-leaf' },
+            { id: 'hospital', name: '通院同行', icon: 'fa-hospital' },
+            { id: 'shopping', name: '買い物・移動販売', icon: 'fa-shopping-cart' },
+            { id: 'cleaning', name: '大掃除・便利屋', icon: 'fa-broom' },
+            { id: 'chat', name: '見守り・話', icon: 'fa-comments' },
+            { id: 'food', name: '配食・弁当', icon: 'fa-utensils' },
+        ];
+
+        // サービス（社会資源）のモックデータ（すべて架空）
+        const services = [
+            {
+                id: 1,
+                name: '△△ボランティアセンター',
+                provider: '〇〇市社会福祉協議会',
+                tags: ['garbage', 'shopping', 'chat'],
+                price: '内容により応相談（実費等）',
+                description: '地域のボランティアによる生活支援の相談窓口。ゴミ出しや話し相手など、地域の助け合い活動を繋ぎます。',
+                type: '公的窓口',
+                phone: '0000-00-0000',
+                color: 'bg-green-100 text-green-800 border-green-200'
+            },
+            {
+                id: 2,
+                name: '〇〇市シルバー人材センター 草刈り・剪定',
+                provider: '〇〇市シルバー人材センター',
+                tags: ['yard', 'cleaning'],
+                price: '手刈り 1時間 1,423円〜',
+                description: '経験豊富なシニアによる草むしりや庭木の手入れ。（※機械刈りは1時間1,661円〜、機械使用料・ごみ処分費別途）',
+                type: '公的サービス',
+                phone: '0000-00-0000',
+                color: 'bg-blue-100 text-blue-800 border-blue-200'
+            },
+            {
+                id: 3,
+                name: '〇〇福祉タクシー',
+                provider: '民間（〇〇市・近隣エリア）',
+                tags: ['hospital', 'shopping', 'cleaning'],
+                price: '介助程度に応じた料金設定',
+                description: '通院や外出の移動支援に加えて、付き添い・買い物代行・軽作業などの生活支援にも対応。',
+                type: '民間・福祉タクシー',
+                phone: '0000-00-0000',
+                color: 'bg-orange-100 text-orange-800 border-orange-200'
+            },
+            {
+                id: 4,
+                name: '△△福祉タクシー',
+                provider: '民間救急（〇〇市）',
+                tags: ['hospital'],
+                price: '要事前見積もり',
+                description: '看護師・救急救命士の国家資格を持った運転手が対応。車椅子やストレッチャーでの病院受診、退院・転院をサポート。',
+                type: '民間・福祉タクシー',
+                phone: '0000-00-0000',
+                color: 'bg-orange-100 text-orange-800 border-orange-200'
+            },
+            {
+                id: 5,
+                name: '□□ヘルパーステーション 保険外',
+                provider: '民間介護事業所',
+                tags: ['cleaning', 'shopping'],
+                price: '1時間 2,500円（30分1,250円〜）',
+                description: '介護保険では対応できない同居家族の部屋の掃除や、長時間の見守りなどを自費サービスとして提供します。',
+                type: '自費サービス',
+                phone: '0000-00-0000',
+                color: 'bg-purple-100 text-purple-800 border-purple-200'
+            },
+            {
+                id: 6,
+                name: '地域活動支援センター △△',
+                provider: 'NPO法人△△',
+                tags: ['chat'],
+                price: '無料（実費のみ）',
+                description: 'こころの病気や障害のある方が、日頃の不安や悩みを相談したり、仲間と過ごせる集いの場を提供しています。',
+                type: 'NPO法人',
+                phone: '0000-00-0000',
+                color: 'bg-green-100 text-green-800 border-green-200'
+            },
+            {
+                id: 7,
+                name: '□□便利屋',
+                provider: '民間企業（〇〇市）',
+                tags: ['cleaning', 'yard', 'garbage'],
+                price: '要見積もり（明朗会計）',
+                description: '不用品回収、大掃除、草刈り・庭の手入れから、ちょっとした家具の移動まで、生活のあらゆる「困った」に対応する地域密着の便利屋。',
+                type: '民間・便利屋',
+                phone: '0000-00-0000',
+                color: 'bg-red-100 text-red-800 border-red-200'
+            },
+            {
+                id: 8,
+                name: '移動スーパー 〇〇号',
+                provider: '地元スーパー連携',
+                tags: ['shopping', 'food'],
+                price: '商品代金 ＋ 手数料',
+                description: 'お刺身、お肉、野菜からお惣菜まで。軽トラックに商品を積んで、ご自宅の近くまで訪問・販売します。（※曜日はエリアにより異なります）',
+                type: '移動販売',
+                phone: '0000-00-0000',
+                color: 'bg-teal-100 text-teal-800 border-teal-200'
+            },
+            {
+                id: 9,
+                name: '配食サービス △△弁当',
+                provider: '民間配食サービス',
+                tags: ['food', 'chat'],
+                price: '1食 500円前後〜',
+                description: '高齢者向けの栄養バランスを考えたお弁当を毎日ご自宅まで配達します。手渡しによる安否確認（見守り）も兼ねています。',
+                type: '配食サービス',
+                phone: '0000-00-0000',
+                color: 'bg-pink-100 text-pink-800 border-pink-200'
+            }
+        ];
+
+        let currentFilter = 'all';
+
+        // 初期化処理
+        function init() {
+            renderCategories();
+            renderServices(services);
+        }
+
+        // カテゴリボタンの描画
+        function renderCategories() {
+            const container = document.getElementById('category-container');
+            container.innerHTML = `
+                <button onclick="filterServices('all')" id="btn-all" class="category-btn active flex flex-col items-center justify-center p-3 bg-white border-2 border-primary rounded-xl text-primary font-bold">
+                    <i class="fas fa-layer-group text-xl mb-1"></i>
+                    <span class="text-[10px]">すべて</span>
+                </button>
+            `;
+
+            categories.forEach(cat => {
+                container.innerHTML += `
+                    <button onclick="filterServices('${cat.id}')" id="btn-${cat.id}" class="category-btn flex flex-col items-center justify-center p-3 bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50">
+                        <i class="fas ${cat.icon} text-xl mb-1 text-gray-400"></i>
+                        <span class="text-[10px]">${cat.name}</span>
+                    </button>
+                `;
+            });
+        }
+
+        // サービスの絞り込み
+        function filterServices(categoryId) {
+            currentFilter = categoryId;
+            
+            // ボタンのスタイル更新
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-primary', 'border-2', 'text-primary', 'bg-orange-50');
+                btn.classList.add('border-gray-200', 'border', 'text-gray-600');
+                btn.querySelector('i').classList.add('text-gray-400');
+            });
+            
+            const activeBtn = document.getElementById(`btn-${categoryId}`);
+            activeBtn.classList.remove('border-gray-200', 'border', 'text-gray-600');
+            activeBtn.classList.add('active', 'border-primary', 'border-2', 'text-primary', 'bg-orange-50');
+            activeBtn.querySelector('i').classList.remove('text-gray-400');
+
+            // タイトルの更新
+            const titleEl = document.getElementById('result-title');
+            if (categoryId === 'all') {
+                titleEl.textContent = 'すべてのサービス';
+            } else {
+                const catName = categories.find(c => c.id === categoryId).name;
+                titleEl.textContent = `${catName}のサポート`;
+            }
+
+            // データのフィルタリング
+            let filtered = services;
+            if (categoryId !== 'all') {
+                filtered = services.filter(service => service.tags.includes(categoryId));
+            }
+
+            renderServices(filtered);
+        }
+
+        // サービスリストの描画
+        function renderServices(filteredServices) {
+            const listContainer = document.getElementById('service-list');
+            const emptyState = document.getElementById('empty-state');
+            const countEl = document.getElementById('result-count');
+
+            countEl.textContent = `${filteredServices.length}件`;
+            listContainer.innerHTML = '';
+
+            if (filteredServices.length === 0) {
+                listContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            listContainer.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            filteredServices.forEach(service => {
+                listContainer.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="inline-block px-2 py-1 text-[10px] font-bold rounded ${service.color} mb-1">
+                                    ${service.type}
+                                </span>
+                                <h3 class="font-bold text-gray-800 leading-tight">${service.name}</h3>
+                                <p class="text-[10px] text-gray-500 mt-1"><i class="far fa-building mr-1"></i>${service.provider}</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 my-2 line-clamp-2">${service.description}</p>
+                        <div class="bg-gray-50 p-2 rounded flex items-center justify-between mt-3 border border-gray-100">
+                            <div class="text-primary font-bold text-sm">
+                                <i class="fas fa-yen-sign mr-1"></i>${service.price}
+                            </div>
+                        </div>
+                        <div class="mt-3 flex gap-2">
+                            <a href="tel:${service.phone}" class="flex-1 bg-white border-2 border-primary text-primary font-bold py-2 rounded-lg text-center text-sm hover:bg-orange-50 transition">
+                                <i class="fas fa-phone-alt mr-1"></i>電話する
+                            </a>
+                            <button onclick="alert('詳細画面を開きます（モック）')" class="flex-1 bg-primary text-white font-bold py-2 rounded-lg text-center text-sm hover:bg-orange-600 transition shadow-sm">
+                                詳細を見る
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 画面読み込み時に初期化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
