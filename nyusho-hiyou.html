@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-1QW2RE9MKW"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-1QW2RE9MKW');
+</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>入所費用シミュレーター</title>
+<meta name="description" content="特養・老健・介護医療院、有料老人ホーム・グループホーム・サ高住の月額費用の目安を、国の単価・基準額から計算する無料シミュレーター。ケアマネと家族の面談にも使えるかんたんモード付き。">
+<meta property="og:title" content="入所費用シミュレーター">
+<meta property="og:description" content="特養・老健・介護医療院、有料老人ホーム・グループホーム・サ高住の月額費用の目安を、国の単価・基準額から計算する無料シミュレーター。ケアマネと家族の面談にも使えるかんたんモード付き。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sonosann-webai.net/nyusho-hiyou.html">
+<meta property="og:image" content="https://sonosann-webai.net/image/top.png">
+<link rel="canonical" href="https://sonosann-webai.net/nyusho-hiyou.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Kaku+Gothic+Antique:wght@500;700;900&display=swap">
+<style>
+/* Layout: 1カラムの計算台帳。上に条件、下に月額の内訳。根拠は引き出しパネルで開く */
+:root{
+  --bg:#eef2f1; --surface:#ffffff; --ink:#1d2b2a; --muted:#5b6b69; --line:#d3dcda;
+  --accent:#2f6f5e; --accent-ink:#ffffff; --soft:#dcebe6;
+  --c1:#2f6f5e; --c2:#c58a2b; --c3:#5a7fb0; --c4:#9aa7a5; --c5:#8a6bb0;
+  --warn-bg:#fff4dc; --warn-ink:#7a5410;
+  --refund:#b8365f; --refund-bg:#fbe6ed;
+  --display:"Zen Kaku Gothic Antique","Hiragino Sans","Yu Gothic",sans-serif;
+  --body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121a19; --surface:#1b2625; --ink:#e4ecea; --muted:#9db0ad; --line:#2f3d3b;
+  --accent:#6fbfa7; --accent-ink:#0f1b18; --soft:#20352f;
+  --c1:#6fbfa7; --c2:#e0ad55; --c3:#8fb0dd; --c4:#6e7d7b; --c5:#b9a0de;
+  --warn-bg:#3a2e14; --warn-ink:#f0cf8a; --refund:#f28aaa; --refund-bg:#3a1f29; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121a19; --surface:#1b2625; --ink:#e4ecea; --muted:#9db0ad; --line:#2f3d3b;
+  --accent:#6fbfa7; --accent-ink:#0f1b18; --soft:#20352f;
+  --c1:#6fbfa7; --c2:#e0ad55; --c3:#8fb0dd; --c4:#6e7d7b; --c5:#b9a0de;
+  --warn-bg:#3a2e14; --warn-ink:#f0cf8a; --refund:#f28aaa; --refund-bg:#3a1f29; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+.wrap{max-width:760px;margin:0 auto;display:grid;gap:20px}
+header h1{font-family:var(--display);font-weight:900;font-size:clamp(24px,6vw,34px);line-height:1.3;margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.asof{display:inline-block;font-size:12px;letter-spacing:.06em;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:1px 8px;margin-bottom:8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.panel h2{font-family:var(--display);font-size:17px;margin:0 0 12px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+label.f{display:grid;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+select,input[type=number]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px;width:100%}
+select:focus,input:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:14px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.warn{background:var(--warn-bg);color:var(--warn-ink);border-radius:6px;padding:8px 12px;font-size:13px;margin:12px 0 0}
+.total{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.total .lbl{font-size:13px;color:var(--muted);width:100%}
+.total .num{font-family:var(--display);font-weight:900;font-size:clamp(34px,10vw,48px);letter-spacing:.01em;font-variant-numeric:tabular-nums;line-height:1.1}
+.total .unit{font-size:16px;font-weight:700}
+.total .sub{font-size:13px;color:var(--muted)}
+.howbtn{justify-self:start;margin-top:6px;font:inherit;font-size:13px;font-weight:700;padding:5px 12px;border-radius:999px;border:1px solid var(--refund);background:var(--surface);color:var(--refund);cursor:pointer}
+.step.refund.none .howbtn{border-color:var(--line);color:var(--muted)}
+.howto{margin-top:12px;border:2px solid var(--refund);background:var(--refund-bg);border-radius:8px;padding:14px 16px;font-size:14px}
+.howto h3{font-family:var(--display);font-size:15px;margin:0 0 6px;color:var(--refund)}
+.howto ol,.howto ul{padding-left:1.3em;margin:6px 0}
+.howto p{margin:8px 0 0}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modes button{font:inherit;font-weight:700;font-size:15px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:grid;gap:2px;text-align:left}
+.modes button small{font-weight:400;font-size:12px;color:var(--muted)}
+.modes button[aria-selected="true"]{border:2px solid var(--accent);background:var(--soft)}
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:6px}
+.prog{display:flex;gap:4px;align-items:center}
+.prog i{display:block;width:22px;height:5px;border-radius:3px;background:var(--line)}
+.prog i.on{background:var(--accent)}
+.link{font:inherit;font-size:13px;background:none;border:none;color:var(--accent);cursor:pointer;text-decoration:underline;padding:4px}
+.q h3{font-family:var(--display);font-size:clamp(18px,4.8vw,22px);margin:4px 0 4px;text-wrap:balance}
+.q .qhint{font-size:13px;color:var(--muted);margin:0 0 12px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.opt{font:inherit;font-size:15px;text-align:left;padding:12px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;display:grid;gap:2px;min-width:0}
+.opt small{font-size:12px;color:var(--muted)}
+.opt:hover{border-color:var(--accent)}
+.opt.sel{border:2px solid var(--accent);background:var(--soft)}
+.answers{display:grid;gap:4px;margin:8px 0 12px;font-size:14px}
+.answers div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:5px 0}
+.answers span:first-child{color:var(--muted)}
+.answers span:last-child{text-align:right}
+.verdict{display:inline-block;font-weight:700;font-size:14px;padding:6px 12px;border-radius:6px;background:var(--soft);color:var(--accent);margin-top:4px}
+.donebtns{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:14px}
+.pending{font-size:13px;margin:0 0 8px;color:var(--warn-ink);background:var(--warn-bg);border-radius:6px;padding:6px 10px}
+.chk{display:flex;gap:8px;align-items:flex-start;grid-column:1/-1;color:var(--ink)}
+.chk input{margin-top:5px;width:18px;height:18px;flex:none}
+.cmpbtn{width:100%;margin-top:14px;background:var(--refund-bg);color:var(--refund);border:2px solid var(--refund)}
+.cmplist{display:grid;gap:6px}
+.cmpgrp{font-size:12px;font-weight:700;color:var(--muted);margin-top:6px}
+.cmprow{font:inherit;color:var(--ink);text-align:left;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n v" "b b" "x x";gap:4px 10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);cursor:pointer}
+.cmprow:hover{border-color:var(--accent)}
+.cmprow.cur{border:2px solid var(--accent);background:var(--soft)}
+.cn{grid-area:n;font-weight:700;font-size:14px;min-width:0}
+.cn em{font-style:normal;font-size:11px;font-weight:700;color:var(--accent-ink);background:var(--accent);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+.cv{grid-area:v;text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+.cv b{font-family:var(--display);font-size:18px}
+.cv small{display:block;font-size:11px;color:var(--refund)}
+.cb{grid-area:b;display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--line)}
+.cf{background:var(--accent)}
+.cnote{grid-area:x;font-size:12px;color:var(--muted)}
+.delta{font-size:13px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--soft);color:var(--accent);font-variant-numeric:tabular-nums}
+.delta.up{background:var(--warn-bg);color:var(--warn-ink)}
+.flow{display:grid;grid-template-columns:1fr auto 1.25fr auto 1fr;align-items:stretch;gap:8px;margin-top:16px}
+.flow .arrow{align-self:center;color:var(--muted);font-weight:700}
+.step{display:grid;gap:2px;align-content:start;padding:10px 12px;border-radius:8px;background:var(--bg);border:1px solid var(--line);min-width:0}
+.step .k{font-size:12px;color:var(--muted)}
+.step .v{font-size:14px;font-variant-numeric:tabular-nums}
+.step .v b{font-family:var(--display);font-size:20px;font-weight:900}
+.step .note{font-size:12px;color:var(--muted);line-height:1.5}
+.step.refund{background:var(--refund-bg);border:2px solid var(--refund);}
+.step.refund .k,.step.refund .v{color:var(--refund)}
+.step.refund .v b{font-size:26px}
+.step.refund.none{background:var(--bg);border:1px dashed var(--line)}
+.step.refund.none .k,.step.refund.none .v{color:var(--muted)}
+.step.refund.none .v b{font-size:20px}
+.step.net{border-color:var(--accent)}
+.step.net .v b{color:var(--accent)}
+@media (max-width:560px){.flow{grid-template-columns:1fr}.flow .arrow{justify-self:center;transform:rotate(90deg);line-height:1}}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-bottom:6px}
+.seg-refund{background:repeating-linear-gradient(135deg,var(--refund) 0 5px,var(--refund-bg) 5px 9px)}
+.flash{animation:flash 1.2s ease-out}
+@keyframes flash{0%{background:var(--refund-bg)}100%{background:transparent}}
+@media (prefers-reduced-motion: reduce){.flash{animation:none}}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:14px 0 6px;background:var(--line)}
+.bar span{display:block;height:100%;transition:width .3s}
+@media (prefers-reduced-motion: reduce){.bar span{transition:none}}
+table.bd{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+table.bd td{padding:9px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.bd td:last-child{text-align:right;white-space:nowrap;font-weight:700}
+table.bd small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;vertical-align:middle}
+.ctas{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:700;font-size:15px;padding:13px 16px;border-radius:8px;cursor:pointer;text-decoration:none;text-align:center}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent)}
+.btn.ghost{background:var(--surface);color:var(--accent);border:1px solid var(--accent)}
+#logic h3{font-family:var(--display);font-size:15px;margin:18px 0 6px}
+#logic p,#logic li{font-size:14px}
+#logic ol,#logic ul{padding-left:1.3em;margin:6px 0}
+.formula{background:var(--bg);border:1px dashed var(--line);border-radius:6px;padding:10px 12px;font-size:13px;overflow-x:auto;white-space:pre;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto}
+.tbl table{border-collapse:collapse;font-size:13px;min-width:520px;font-variant-numeric:tabular-nums}
+.tbl th,.tbl td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl th{background:var(--soft);font-weight:700}
+.grp{font-size:13px;font-weight:700;color:var(--ink);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin-top:4px}
+.grp small{font-weight:400;color:var(--muted);font-size:12px}
+.info{background:var(--soft);border-radius:6px;padding:10px 12px;font-size:13px;margin-top:12px;display:grid;gap:4px}
+.info b{color:var(--accent)}
+.src a{color:var(--accent);word-break:break-all}
+footer{font-size:12px;color:var(--muted)}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="asof">令和8年8月1日時点の基準で計算</span>
+    <h1>施設やホームに入ったら、月いくらかかる？</h1>
+    <p>特養・老健・介護医療院と、有料老人ホーム・グループホーム・サ高住の「月額の目安」を計算します。介護の部分は国の単価と上限額、家賃や食費はホームの料金表の金額で計算します。</p>
+  </header>
+
+  <div class="modes" role="tablist" aria-label="入力のしかた">
+    <button type="button" role="tab" id="tabSimple" aria-selected="true" aria-controls="simple">かんたんモード<small>質問に答えるだけ</small></button>
+    <button type="button" role="tab" id="tabDetail" aria-selected="false" aria-controls="detail">くわしくモード<small>ケアマネ・相談員向け</small></button>
+  </div>
+
+  <section class="panel" id="simple" role="tabpanel" aria-labelledby="tabSimple">
+    <div class="qhead"><span id="qProg"></span><button type="button" class="link" id="qBack">ひとつ戻る</button></div>
+    <div id="qBody"></div>
+    <div id="qDone" hidden></div>
+  </section>
+
+  <section class="panel" id="detail" role="tabpanel" aria-labelledby="tabDetail" hidden>
+    <h2 id="h-cond">条件を選ぶ</h2>
+    <div class="fields">
+      <div class="f" style="grid-column:1/-1;display:grid;gap:6px">
+        <span class="grp">介護保険施設<small>負担限度額認定証が使える</small></span>
+        <div class="seg" role="group" aria-label="介護保険施設">
+          <button type="button" data-v="toku" aria-pressed="true">特養（特別養護老人ホーム）</button>
+          <button type="button" data-v="roken" aria-pressed="false">老健（介護老人保健施設）</button>
+          <button type="button" data-v="iryo" aria-pressed="false">介護医療院</button>
+        </div>
+        <span class="grp">老人ホーム・住まい<small>家賃・食費は契約どおり</small></span>
+        <div class="seg" role="group" aria-label="老人ホーム・住まい">
+          <button type="button" data-v="tokutei" aria-pressed="false">介護付き有料老人ホーム</button>
+          <button type="button" data-v="gh" aria-pressed="false">グループホーム</button>
+          <button type="button" data-v="jutaku" aria-pressed="false">住宅型有料・サ高住</button>
+        </div>
+      </div>
+      <label class="f" id="wrapSub">施設のタイプ
+        <select id="sub"></select>
+      </label>
+      <label class="f" id="wrapRoom">お部屋のタイプ
+        <select id="room">
+          <option value="multi">多床室（相部屋）</option>
+          <option value="trad">従来型個室</option>
+          <option value="unitMulti">ユニット型個室的多床室</option>
+          <option value="unit">ユニット型個室</option>
+        </select>
+      </label>
+      <label class="f">要介護度
+        <select id="care">
+          <option value="0">要介護1</option><option value="1">要介護2</option>
+          <option value="2" selected>要介護3</option><option value="3">要介護4</option><option value="4">要介護5</option>
+        </select>
+      </label>
+      <label class="f">負担割合（負担割合証の割合）
+        <select id="ratio">
+          <option value="1">1割</option><option value="2">2割</option><option value="3">3割</option>
+        </select>
+      </label>
+      <label class="f"><span id="stageLbl">利用者負担段階（負担限度額認定証）</span>
+        <select id="stage">
+          <option value="s4">第4段階（認定証なし・課税世帯など）</option>
+          <option value="s3b">第3段階②</option>
+          <option value="s3a">第3段階①</option>
+          <option value="s2" selected>第2段階</option>
+          <option value="s1">第1段階</option>
+        </select>
+      </label>
+      <label class="f chk" id="wrapAsset" hidden><input type="checkbox" id="asset"> 預貯金が基準額を超えている（認定証は出ないため、居住費・食費は第4段階と同じ）</label>
+      <label class="f" id="wrapHigh">第4段階の所得区分（高額介護サービス費）
+        <select id="high">
+          <option value="44400">一般・課税所得380万円未満</option>
+          <option value="93000">課税所得380万〜690万円未満</option>
+          <option value="140100">課税所得690万円以上</option>
+        </select>
+      </label>
+      <label class="f">地域区分（施設の所在地）
+        <select id="area">
+          <option value="10.90">1級地（東京23区）</option>
+          <option value="10.72">2級地</option>
+          <option value="10.68">3級地</option>
+          <option value="10.54">4級地</option>
+          <option value="10.45">5級地</option>
+          <option value="10.27">6級地</option>
+          <option value="10.14">7級地</option>
+          <option value="10.00" selected>その他（多くの町村部）</option>
+        </select>
+      </label>
+      <label class="f" id="wrapShogu">処遇改善加算の区分
+        <select id="shogu">
+          <option value="0">加算Ⅰイ</option><option value="1">加算Ⅰロ</option>
+          <option value="2">加算Ⅱイ</option><option value="3">加算Ⅱロ</option>
+          <option value="4">加算Ⅲ</option><option value="5">加算Ⅳ</option>
+          <option value="-1">含めない</option>
+        </select>
+      </label>
+      <label class="f home" id="wrapUse" hidden>介護サービスの使い方（区分支給限度額の何％）
+        <input type="number" id="use" min="0" max="100" step="5" value="60" inputmode="numeric">
+      </label>
+      <label class="f home" hidden>家賃（月）
+        <input type="number" id="rent" min="0" step="1000" value="50000" inputmode="numeric">
+      </label>
+      <label class="f home" hidden>管理費・共益費・光熱水費（月）
+        <input type="number" id="mgmt" min="0" step="1000" value="20000" inputmode="numeric">
+      </label>
+      <label class="f home" hidden>食費（月）
+        <input type="number" id="foodM" min="0" step="1000" value="45000" inputmode="numeric">
+      </label>
+      <label class="f">日常生活費（理美容・日用品など／月）
+        <input type="number" id="daily" min="0" step="1000" value="10000" inputmode="numeric">
+      </label>
+      <label class="f">日数
+        <input type="number" id="days" min="1" max="31" value="30" inputmode="numeric">
+      </label>
+    </div>
+    <p class="hint home" hidden style="margin-top:10px">家賃・管理費・食費は入力例の金額です。ホームの重要事項説明書や料金表の金額に置き換えてください。入居一時金・敷金は含みません。</p>
+    <p class="warn" id="warn" hidden></p>
+    <div class="info" id="homeNote" hidden></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-res" aria-live="polite">
+    <h2 id="h-res">月額の目安</h2>
+    <p class="pending" id="pending" hidden>質問の途中です。ここまでの回答と仮の条件で計算しています。</p>
+    <div class="total">
+      <span class="lbl">ひと月あたりの実質負担（払い戻し後）</span>
+      <span class="num" id="tot">0</span><span class="unit">円</span>
+      <span class="delta" id="delta" hidden></span>
+    </div>
+
+    <div class="flow" id="flow">
+      <div class="step">
+        <span class="k">窓口で払う額</span>
+        <span class="v"><b id="fPay">0</b>円</span>
+      </div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="step refund" id="fRefundBox">
+        <span class="k">高額介護サービス費で戻る</span>
+        <span class="v"><b id="fRefund">0</b>円</span>
+        <span class="note" id="fRefundNote"></span>
+        <button type="button" class="howbtn" id="howBtn" aria-expanded="false" aria-controls="howto">初回申請の方法を見る</button>
+      </div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="step net">
+        <span class="k">実質の月額</span>
+        <span class="v"><b id="fNet">0</b>円</span>
+      </div>
+    </div>
+
+    <div class="howto" id="howto" hidden>
+      <h3>高額介護サービス費の初回申請</h3>
+      <ol>
+        <li><b>市町村からのお知らせを待つ</b>：上限を超えた月があると、多くの市町村ではサービスを使った月の2〜3か月後に、対象の方へ申請書が届きます。</li>
+        <li><b>申請書を出す</b>：申請書に振込先口座を書いて、市町村の介護保険の窓口へ提出します（郵送できる市町村も多いです）。</li>
+        <li><b>あとは自動で振り込み</b>：多くの市町村では、一度申請すると次からは同じ口座に自動で振り込まれます。</li>
+      </ol>
+      <p><b>用意するもの（例）</b>：申請書、介護保険被保険者証、振込先の通帳やキャッシュカード、マイナンバーがわかるもの、窓口に行く人の本人確認書類。本人以外の口座に振り込む場合は委任欄の記入が必要です。</p>
+      <p><b>気をつけること</b></p>
+      <ul>
+        <li>申請できるのは、サービスを使った月の翌月1日から2年以内です。過ぎると戻りません。</li>
+        <li>お知らせが届かない、なくしたという場合も、市町村の窓口に相談すれば申請できます。</li>
+        <li>居住費・食費・日常生活費は対象外です。医療費とあわせて1年間の負担が大きい場合は、別に「高額医療・高額介護合算療養費」もあります。</li>
+      </ul>
+      <p class="hint">手続きの細かい流れや必要書類は市町村によって違います。わからないときは担当のケアマネジャーか市町村の介護保険窓口に聞いてください。</p>
+    </div>
+
+    <div class="bar" id="bar" aria-hidden="true"></div>
+    <div class="legend" id="legend" aria-hidden="true"></div>
+    <table class="bd"><tbody id="bd"></tbody></table>
+    <p class="hint" style="margin-top:10px" id="kasanNote">各施設が独自に算定する加算（サービス提供体制強化加算、夜勤職員配置加算など）は含みません。実際の請求は数千円〜1万円程度上がることがあります。</p>
+  </section>
+
+  <div class="ctas">
+    <button type="button" class="btn ghost" id="logicBtn" aria-expanded="false" aria-controls="logic">計算の根拠とロジックを見る</button>
+    <a class="btn primary" href="https://start-reposi.vercel.app/kaigo" target="_blank" rel="noopener">この条件で入れる施設を探す（事業所検索）</a>
+  </div>
+
+  <section class="panel" id="logic" hidden aria-labelledby="h-logic">
+    <h2 id="h-logic">何を根拠に計算しているか</h2>
+    <p>このシミュレーターは、国（厚生労働省）が決めている「介護報酬の単位数」「居住費・食費の基準費用額と負担限度額」「高額介護サービス費の上限額」をそのまま使って計算しています。施設ごとの料金表は使っていないため、全国共通のものさしとして使えますが、実際の金額は施設の契約内容で変わります。</p>
+
+    <h3>計算の流れ</h3>
+    <div class="formula" id="fx"></div>
+    <ol>
+      <li><b>介護サービス費</b>：要介護度・部屋タイプごとの1日の単位数 × 日数に、処遇改善加算の加算率を上乗せし、地域区分ごとの1単位の単価（10.00〜10.90円）を掛けて費用総額を出します。そのうち負担割合（1〜3割）が自己負担です。</li>
+      <li><b>高額介護サービス費</b>：介護サービス費の自己負担が所得区分ごとの月の上限額を超えた分は、申請すると払い戻されます。上の合計は払い戻し後の金額です。</li>
+      <li><b>居住費・食費</b>：介護保険の対象外で全額自己負担です。第4段階の方は国の「基準費用額」を目安にしています（実際は施設と契約で決める額）。第1〜第3段階②の方は認定証の「負担限度額」で計算します。</li>
+      <li><b>日常生活費</b>：理美容代・日用品・嗜好品などで、施設ごとに大きく違うため入力欄で調整できます。</li>
+    </ol>
+
+    <h3>老人ホーム・サ高住の場合</h3>
+    <p>有料老人ホーム・グループホーム・サ高住は介護保険施設ではないため、負担限度額認定証（補足給付）は使えません。家賃・管理費・食費はホームとの契約で決まり、所得による軽減はありません。一方、介護サービス費の自己負担は高額介護サービス費の対象なので、住民税非課税世帯などでは月の上限が下がります。</p>
+    <ul>
+      <li><b>介護付き有料老人ホーム</b>：特定施設入居者生活介護の1日の単位数 × 日数で計算します。</li>
+      <li><b>グループホーム</b>：認知症対応型共同生活介護（1ユニット／2ユニット以上）の1日の単位数 × 日数で計算します。要支援2の方も利用できますが、この試作では要介護1〜5のみです。</li>
+      <li><b>住宅型有料・サ高住</b>：介護は外部の訪問介護やデイサービスを使うため、決まった単位数がありません。要介護度ごとの区分支給限度額のうち何％使うかで目安を出します。処遇改善加算は限度額の外で別にかかりますが、この試作では含めていません。単価は選んだ地域区分で近似しています（訪問介護など人件費割合の高いサービスは実際の単価がもう少し高くなります）。</li>
+      <li>グループホームでは、家賃や食費を独自に助成している市町村があります。お住まいの市町村に確認してください。</li>
+    </ul>
+
+    <h3>地域だけ変えると何が変わるか</h3>
+    <p>地域区分が高い地域（東京23区は1級地）ほど1単位の単価が高く、同じ要介護度・同じ部屋でも介護サービス費は最大で約9%高くなります。一方、高額介護サービス費の上限額は全国一律です。</p>
+    <ul>
+      <li><b>上限を超える人</b>（第1〜第3段階の多くの方、2〜3割負担の方など）：地域で高くなった分は払い戻しに回るため、払い戻し後の実質負担は全国どこでも同じです。変わるのは「窓口でいったん払う額」と「戻ってくる額」です。</li>
+      <li><b>上限に届かない人</b>（第4段階で1割負担の方など）：払い戻しがないため、地域区分が高い地域ほどそのまま負担が増えます。</li>
+    </ul>
+    <p>実際には、次の点でも地域差や個人差が出ます。</p>
+    <ul>
+      <li>居住費・食費は高額介護サービス費の対象外です。第4段階の方の居住費・食費は施設が契約で決めるため、都市部では基準費用額より高いことがよくあります。</li>
+      <li>上限額は世帯で判定します。同じ世帯で他の家族も介護サービスを使っている場合は合算されます。</li>
+      <li>払い戻しは後日です。窓口で払う額が大きい地域では、一時的な家計の負担も大きくなります。初回は市町村への申請が必要です。</li>
+    </ul>
+
+    <h3>使っている数値（1日あたり）</h3>
+    <p class="hint">居住費・食費は令和8年8月改定後の額です。食費の基準費用額は1日1,445円から1,545円に引き上げられました。</p>
+    <div class="tbl"><table id="tblStay"></table></div>
+    <div class="tbl" style="margin-top:10px"><table id="tblUnits"></table></div>
+
+    <h3>前提と注意点</h3>
+    <ul>
+      <li>特養は新規入所が原則要介護3以上です（要介護1・2は特例入所のみ）。</li>
+      <li>老健の基本型・在宅強化型は多床室の室料を徴収しない区分として計算しています。介護医療院Ⅱ型の多床室は室料を徴収する区分（居住費の基準697円）で計算しています。室料を徴収する施設では基本単位から一定の単位が差し引かれますが、この試作では反映していません。</li>
+      <li>地域区分は市町村ごとに決まっています。施設の所在地がどの級地かは、市町村または施設に確認してください。</li>
+      <li>負担限度額認定には預貯金などの資産要件があります。段階の判定は市町村が行います。</li>
+      <li>月の日数・入退所日・入院や外泊がある月は金額が変わります。</li>
+      <li>医療費（老健・医療院以外の受診）やおむつ代の扱いは施設によって異なります。</li>
+    </ul>
+
+    <h3>出典</h3>
+    <ul class="src">
+      <li><a href="https://www.kaigokensaku.mhlw.go.jp/publish/group14.html" target="_blank" rel="noopener">介護サービス情報公表システム：介護老人福祉施設の利用者負担</a></li>
+      <li><a href="https://www.kaigokensaku.mhlw.go.jp/publish/group15.html" target="_blank" rel="noopener">介護サービス情報公表システム：介護老人保健施設の利用者負担</a></li>
+      <li><a href="https://www.kaigokensaku.mhlw.go.jp/publish/group17.html" target="_blank" rel="noopener">介護サービス情報公表システム：特定施設入居者生活介護の利用者負担</a></li>
+      <li><a href="https://www.kaigokensaku.mhlw.go.jp/publish/group18.html" target="_blank" rel="noopener">介護サービス情報公表システム：認知症対応型共同生活介護の利用者負担</a></li>
+      <li><a href="https://www.kaigokensaku.mhlw.go.jp/publish/group26.html" target="_blank" rel="noopener">介護サービス情報公表システム：介護医療院の利用者負担</a></li>
+      <li><a href="https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000188411_00073.html" target="_blank" rel="noopener">厚生労働省：令和8年度介護報酬改定について（処遇改善加算の加算率・食費の基準費用額）</a></li>
+      <li><a href="https://www.kaigokensaku.mhlw.go.jp/commentary/fee.html" target="_blank" rel="noopener">介護サービス情報公表システム：サービスにかかる利用料（高額介護サービス費）</a></li>
+    </ul>
+    <button type="button" class="btn ghost" id="logicClose" style="margin-top:12px;width:100%">閉じる</button>
+  </section>
+
+  <footer>
+    この金額は制度上の目安で、実際の請求額を保証するものではありません。入所を検討するときは、施設の重要事項説明書と担当ケアマネジャー、市町村の窓口で確認してください。<br>
+    作成：sonosann Web&amp;AIサポート（元ケアマネジャー・看護師）
+  </footer>
+</div>
+
+<script>
+// 数値データ：介護報酬改定・基準額の改定時はここだけ差し替える
+const DATA = {
+  asOf: "2026-08-01",
+  facilities: {
+    toku: { name:"特養", kind:"facility", subs:{ std:{label:"介護福祉施設サービス費",
+      units:{ trad:[589,659,732,802,871], multi:[589,659,732,802,871], unit:[670,740,815,886,955], unitMulti:[670,740,815,886,955] } } },
+      shogu:[16.3,17.6,15.9,17.2,13.6,11.3], stayKey:"toku" },
+    roken:{ name:"老健", kind:"facility", subs:{
+      basic:{label:"基本型", units:{ trad:[717,763,828,883,932], multi:[793,843,908,961,1012], unit:[802,848,913,968,1018], unitMulti:[802,848,913,968,1018] } },
+      strong:{label:"在宅強化型", units:{ trad:[788,863,928,985,1040], multi:[871,947,1014,1072,1125], unit:[876,952,1018,1077,1130], unitMulti:[876,952,1018,1077,1130] } } },
+      shogu:[9.0,9.7,8.6,9.3,6.9,5.9], stayKey:"rokenNoFee" },
+    iryo:{ name:"介護医療院", kind:"facility", subs:{
+      t1:{label:"Ⅰ型（Ⅰ）", units:{ trad:[721,832,1070,1172,1263], multi:[833,943,1182,1283,1375], unit:[850,960,1199,1300,1392], unitMulti:[850,960,1199,1300,1392] }, stayKey:"rokenNoFee" },
+      t2:{label:"Ⅱ型（Ⅰ）", units:{ trad:[675,771,981,1069,1149], multi:[786,883,1092,1181,1261], unit:[849,951,1173,1267,1353], unitMulti:[849,951,1173,1267,1353] }, stayKey:"rokenFee" } },
+      shogu:[6.2,6.6,5.8,6.2,4.7,4.0], stayKey:"rokenNoFee" },
+    tokutei:{ name:"介護付き有料老人ホーム", kind:"home", subs:{ std:{label:"特定施設入居者生活介護", daily:[542,609,679,744,813]} },
+      shogu:[14.8,15.9,14.2,15.3,13.0,10.8], defaults:{rent:50000,mgmt:20000,food:45000} },
+    gh:{ name:"グループホーム", kind:"home", subs:{
+      u1:{label:"1ユニット", daily:[765,801,824,841,859]},
+      u2:{label:"2ユニット以上", daily:[753,788,812,828,845]} },
+      shogu:[21.0,22.8,20.2,22.0,17.9,14.9], defaults:{rent:40000,mgmt:15000,food:35000} },
+    jutaku:{ name:"住宅型有料・サ高住", kind:"home", subs:{ std:{label:"外部の居宅サービス", limit:[16765,19705,27048,30938,36217]} },
+      shogu:null, defaults:{rent:60000,mgmt:20000,food:40000} }
+  },
+  // [基準費用額, 第1段階, 第2段階, 第3段階①, 第3段階②]
+  stay:{
+    multi_toku:[915,0,430,430,530],
+    multi_rokenFee:[697,0,430,430,530],
+    multi_rokenNoFee:[437,0,430,430,430],
+    trad_toku:[1231,380,480,880,980],
+    trad_roken:[1728,550,550,1370,1470],
+    unitMulti:[1728,550,550,1370,1470],
+    unit:[2066,880,880,1370,1470]
+  },
+  food:[1545,300,390,680,1420],
+  highCap:{ s1:15000, s2:15000, s3a:24600, s3b:24600 }
+};
+const STAGE_IDX={s4:0,s1:1,s2:2,s3a:3,s3b:4};
+const STAGE_LABEL={s4:"第4段階",s3b:"第3段階②",s3a:"第3段階①",s2:"第2段階",s1:"第1段階"};
+const STAGE_OPT={
+  facility:{s4:"第4段階（認定証なし・課税世帯など）",s3b:"第3段階②",s3a:"第3段階①",s2:"第2段階",s1:"第1段階"},
+  home:{s4:"住民税課税世帯",s3b:"非課税世帯（年金収入等120万円超）",s3a:"非課税世帯（年金収入等80万円超〜120万円）",s2:"非課税世帯（年金収入等80万円以下）",s1:"生活保護・老齢福祉年金"}
+};
+const ROOM_LABEL={multi:"多床室",trad:"従来型個室",unitMulti:"ユニット型個室的多床室",unit:"ユニット型個室"};
+const $=id=>document.getElementById(id);
+const yen=n=>Math.round(n).toLocaleString("ja-JP");
+let fac="toku", prevTotal=null, prevVals=null, prevKeys=null, prevRefund=null;
+
+function stayRow(room, facKey, stayKey){
+  if(room==="multi") return DATA.stay["multi_"+(facKey==="toku"?"toku":stayKey)];
+  if(room==="trad") return DATA.stay[facKey==="toku"?"trad_toku":"trad_roken"];
+  return DATA.stay[room];
+}
+function setFac(v){
+  fac=v;
+  const f=DATA.facilities[fac], keys=Object.keys(f.subs), home=f.kind==="home";
+  document.querySelectorAll("[data-v]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===v?"true":"false"));
+  $("sub").innerHTML=keys.map(k=>`<option value="${k}">${f.subs[k].label}</option>`).join("");
+  $("wrapSub").hidden = keys.length<2;
+  $("wrapRoom").hidden = home;
+  document.querySelectorAll(".home").forEach(el=>el.hidden=!home);
+  $("wrapUse").hidden = fac!=="jutaku";
+  $("wrapShogu").hidden = !f.shogu;
+  $("stageLbl").textContent = home ? "所得区分（高額介護サービス費の上限）" : "利用者負担段階（負担限度額認定証）";
+  const sel=$("stage"), cur=sel.value;
+  [...sel.options].forEach(o=>o.textContent=STAGE_OPT[f.kind][o.value]);
+  sel.value=cur;
+  if(home){ $("rent").value=f.defaults.rent; $("mgmt").value=f.defaults.mgmt; $("foodM").value=f.defaults.food; }
+  $("kasanNote").textContent = fac==="jutaku"
+    ? "訪問介護やデイサービスの利用量によって大きく変わります。ケアプランの実際の利用額がわかる場合は、限度額の何％にあたるかで調整してください。"
+    : "各施設が独自に算定する加算（サービス提供体制強化加算、夜勤職員配置加算など）は含みません。実際の請求は数千円〜1万円程度上がることがあります。";
+  prevTotal=null; prevVals=null; prevKeys=null; prevRefund=null; $("delta").hidden=true;
+  calc();
+}
+function calc(){
+  const f=DATA.facilities[fac], subKey=$("sub").value, sub=f.subs[subKey], home=f.kind==="home";
+  const room=$("room").value, care=+$("care").value, ratio=+$("ratio").value;
+  const stage=$("stage").value, area=+$("area").value;
+  const sIdx = f.shogu ? +$("shogu").value : -1;
+  const days=Math.max(1,Math.min(31,+$("days").value||30)), daily=Math.max(0,+$("daily").value||0);
+  $("wrapHigh").hidden = stage!=="s4";
+  $("wrapAsset").hidden = home || stage==="s4" || stage==="s1";
+
+  // 介護サービス費
+  let unitDay=0, baseUnits, unitsDesc;
+  const rate = sIdx<0?0:f.shogu[sIdx];
+  if(fac==="jutaku"){
+    const use=Math.max(0,Math.min(100,+$("use").value||0));
+    baseUnits=Math.round(sub.limit[care]*use/100);
+    unitsDesc=`区分支給限度額 ${yen(sub.limit[care])}単位 × ${use}%`;
+  }else{
+    unitDay = home ? sub.daily[care] : sub.units[room][care];
+    baseUnits=unitDay*days;
+    unitsDesc=`${yen(unitDay)}単位×${days}日`;
+  }
+  const totalUnits=Math.round(baseUnits*(1+rate/100));
+  const gross=Math.floor(totalUnits*area);
+  const insured=Math.floor(gross*(10-ratio)/10);
+  const copay=gross-insured;
+  const cap = stage==="s4" ? +$("high").value : DATA.highCap[stage];
+  const careAfter=Math.min(copay,cap);
+  const refund=copay-careAfter;
+
+  let parts, stayLine="", foodLine="";
+  const careRow=["介護サービス費（自己負担）",careAfter,"--c1",`${unitsDesc}${rate?` ＋処遇改善${rate}%`:""} ＝ ${yen(totalUnits)}単位 × ${area.toFixed(2)}円 × ${ratio}割`+(refund>0?`／上限 ${yen(cap)} 円を適用`:"")];
+  if(home){
+    const rent=Math.max(0,+$("rent").value||0), mgmt=Math.max(0,+$("mgmt").value||0), foodM=Math.max(0,+$("foodM").value||0);
+    parts=[careRow,
+      ["家賃",rent,"--c2","ホームの料金表の金額（認定証による軽減なし）"],
+      ["管理費・光熱水費",mgmt,"--c5","ホームの料金表の金額"],
+      ["食費",foodM,"--c3","ホームの料金表の金額（認定証による軽減なし）"],
+      ["日常生活費",daily,"--c4","入力値（おむつ代・理美容など）"]];
+    stayLine=`家賃・管理費    = ${yen(rent+mgmt)}円（契約額）`; foodLine=`食費           = ${yen(foodM)}円（契約額）`;
+  }else{
+    const assetOver = stage!=="s4" && stage!=="s1" && $("asset").checked;
+    const sr=stayRow(room,fac,sub.stayKey||f.stayKey), si=assetOver?0:STAGE_IDX[stage];
+    const stayDay=sr[si], foodDay=DATA.food[si], stay=stayDay*days, food=foodDay*days;
+    const basis = (stage==="s4"||assetOver)?(assetOver?"預貯金が基準超のため基準費用額":"基準費用額"):"負担限度額 "+STAGE_LABEL[stage];
+    parts=[careRow,
+      ["居住費",stay,"--c2",`${yen(stayDay)}円/日 × ${days}日（${basis}）`],
+      ["食費",food,"--c3",`${yen(foodDay)}円/日 × ${days}日（${basis}）`],
+      ["日常生活費",daily,"--c4","入力値（施設により異なる）"]];
+    stayLine=`居住費         = ${yen(stayDay)}円 × ${days}日 = ${yen(stay)}円`; foodLine=`食費           = ${yen(foodDay)}円 × ${days}日 = ${yen(food)}円`;
+  }
+  const total=parts.reduce((a,p)=>a+p[1],0);
+
+  $("tot").textContent=yen(total);
+  const d=$("delta");
+  if(prevTotal!==null && prevTotal!==total){
+    const diff=total-prevTotal;
+    d.hidden=false; d.className="delta"+(diff>0?" up":"");
+    d.textContent=`さっきより ${diff>0?"+":"−"}${yen(Math.abs(diff))}円`;
+  }
+  prevTotal=total;
+
+  $("fPay").textContent=yen(total+refund);
+  $("fNet").textContent=yen(total);
+  $("fRefund").textContent=(refund>0?"−":"")+yen(refund);
+  $("fRefundBox").classList.toggle("none",refund<=0);
+  $("fRefundNote").textContent = refund>0
+    ? `介護サービス費の自己負担 ${yen(copay)}円のうち、上限 ${yen(cap)}円を超えた分が戻ります（初回は市町村へ申請）`
+    : `介護サービス費の自己負担 ${yen(copay)}円は上限 ${yen(cap)}円に届いていないため、払い戻しはありません（あと${yen(cap-copay)}円）`;
+
+  const keys=parts.map(p=>p[0]);
+  const same = prevKeys && prevKeys.join()===keys.join();
+  $("bd").innerHTML=parts.map((p,i)=>`<tr${same&&prevVals[i]!==p[1]?' class="flash"':''}><td><span class="dot" style="background:var(${p[2]})"></span>${p[0]}<small>${p[3]}</small></td><td>${yen(p[1])} 円</td></tr>`).join("")
+    + (refund>0?`<tr class="${prevRefund!==null&&prevRefund!==refund?"flash":""}"><td><span class="dot seg-refund"></span><span style="color:var(--refund);font-weight:700">高額介護サービス費の払い戻し</span><small>窓口でいったん払い、後日口座に戻る分</small></td><td style="color:var(--refund)">−${yen(refund)} 円</td></tr>`:"")
+    + `<tr><td><b>実質の月額</b></td><td>${yen(total)} 円</td></tr>`;
+  prevVals=parts.map(p=>p[1]); prevKeys=keys; prevRefund=refund;
+
+  const payAll=total+refund;
+  const segs=parts.map(p=>`<span style="width:${payAll?p[1]/payAll*100:0}%;background:var(${p[2]})"></span>`);
+  if(refund>0) segs.splice(1,0,`<span class="seg-refund" style="width:${refund/payAll*100}%"></span>`);
+  $("bar").innerHTML=segs.join("");
+  $("legend").innerHTML=parts.map(p=>`<span><span class="dot" style="background:var(${p[2]})"></span>${p[0].replace("（自己負担）","")}</span>`).join("")
+    + (refund>0?`<span style="color:var(--refund);font-weight:700"><span class="dot seg-refund"></span>払い戻される分</span>`:"");
+
+  // 注意・案内
+  const w=$("warn");
+  if(fac==="toku" && care<2){ w.hidden=false; w.textContent="特養の新規入所は原則として要介護3以上です。要介護1・2の方は、やむを得ない事情がある場合の特例入所に限られます。"; }
+  else if(fac==="gh"){ w.hidden=false; w.textContent="グループホームは認知症の診断がある方が対象で、原則としてホームと同じ市町村に住民票がある方が入居できます。"; }
+  else w.hidden=true;
+  const n=$("homeNote");
+  if(home){
+    n.hidden=false;
+    n.innerHTML = `<span><b>負担限度額認定証は使えません。</b>家賃・管理費・食費は所得にかかわらずホームとの契約どおりです。</span>`
+      + `<span><b>介護サービス費は高額介護サービス費の対象です。</b>非課税世帯なら月の上限が ${yen(cap)} 円まで下がります。</span>`
+      + (fac==="gh"?`<span>家賃・食費を独自に助成している市町村もあります。市町村の窓口で確認してください。</span>`:"");
+  }else n.hidden=true;
+
+  $("fx").textContent=
+`介護サービス費 = ${unitsDesc} × (1 + ${rate}%) = ${yen(totalUnits)}単位
+費用総額       = ${yen(totalUnits)}単位 × ${area.toFixed(2)}円 = ${yen(gross)}円
+自己負担(${ratio}割) = ${yen(copay)}円 → 上限${yen(cap)}円 → ${yen(careAfter)}円
+${stayLine}
+${foodLine}
+日常生活費     = ${yen(daily)}円
+合計           = ${yen(total)}円`;
+
+  // 単位数の表
+  const cap2=`<caption style="text-align:left;font-size:13px;padding-bottom:4px;color:var(--muted)">`;
+  const head=`<tr><th>区分</th><th>要介護1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>`;
+  if(fac==="jutaku"){
+    $("tblUnits").innerHTML=`${cap2}区分支給限度額（1か月の単位数）</caption>${head}<tr><td>支給限度額</td>${sub.limit.map(v=>`<td>${yen(v)}</td>`).join("")}</tr>`;
+  }else if(home){
+    $("tblUnits").innerHTML=`${cap2}${f.name}の基本単位数（1日）</caption>${head}`+
+      Object.values(f.subs).map(x=>`<tr><td>${x.label}</td>${x.daily.map(v=>`<td>${yen(v)}</td>`).join("")}</tr>`).join("");
+  }else{
+    const u=sub.units;
+    $("tblUnits").innerHTML=`${cap2}${f.name}${Object.keys(f.subs).length>1?"・"+sub.label:""}の基本単位数（1日）</caption>${head}`+
+      ["multi","trad","unitMulti","unit"].map(r=>`<tr><td>${ROOM_LABEL[r]}</td>${u[r].map(v=>`<td>${yen(v)}</td>`).join("")}</tr>`).join("");
+  }
+}
+function stayTable(){
+  const rows=[["多床室（特養）","multi_toku"],["多床室（老健・医療院 室料あり）","multi_rokenFee"],["多床室（老健・医療院 室料なし）","multi_rokenNoFee"],
+    ["従来型個室（特養）","trad_toku"],["従来型個室（老健・医療院）","trad_roken"],["ユニット型個室的多床室","unitMulti"],["ユニット型個室","unit"]];
+  $("tblStay").innerHTML=`<caption style="text-align:left;font-size:13px;padding-bottom:4px;color:var(--muted)">介護保険施設の居住費・食費（1日・円）</caption><tr><th>区分</th><th>基準費用額</th><th>第1段階</th><th>第2段階</th><th>第3段階①</th><th>第3段階②</th></tr>`+
+    rows.map(r=>`<tr><td>居住費：${r[0]}</td>${DATA.stay[r[1]].map(v=>`<td>${yen(v)}</td>`).join("")}</tr>`).join("")+
+    `<tr><td>食費</td>${DATA.food.map(v=>`<td>${yen(v)}</td>`).join("")}</tr>`;
+}
+
+document.querySelectorAll("[data-v]").forEach(b=>b.addEventListener("click",()=>setFac(b.dataset.v)));
+document.querySelectorAll("select,input").forEach(el=>el.addEventListener("input",calc));
+function setLogic(open){
+  $("logic").hidden=!open; $("logicBtn").setAttribute("aria-expanded",String(open));
+  $("logicBtn").textContent=open?"根拠を閉じる":"計算の根拠とロジックを見る";
+  if(open) $("logic").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+}
+$("logicBtn").addEventListener("click",()=>setLogic($("logic").hidden));
+$("howBtn").addEventListener("click",()=>{const o=$("howto").hidden; $("howto").hidden=!o; $("howBtn").setAttribute("aria-expanded",String(o)); $("howBtn").textContent=o?"申請方法を閉じる":"初回申請の方法を見る";});
+$("logicClose").addEventListener("click",()=>{setLogic(false);$("logicBtn").focus();});
+if(location.hash==="#logic") setLogic(true);
+
+// ===== かんたんモード =====
+const FAC_OPTS=[["toku","特養（特別養護老人ホーム）","原則 要介護3以上"],["roken","老健（介護老人保健施設）","リハビリして在宅復帰をめざす"],["iryo","介護医療院","医療的なケアが長く必要な方"],
+  ["tokutei","介護付き有料老人ホーム","民間のホーム。介護はホームの職員"],["gh","グループホーム","認知症の方が少人数で暮らす"],["jutaku","住宅型有料・サ高住","介護は外部のサービスを使う"]];
+const ASSET={s2:[650,1650],s3a:[550,1550],s3b:[500,1500]};
+let A={}, qi=0;
+const isFacility=()=>A.fac && DATA.facilities[A.fac].kind==="facility";
+function stageOf(){ if(A.tax==="seiho") return "s1"; if(A.tax==="yes") return "s4"; return {low:"s2",mid:"s3a",high:"s3b",unknown:"s3b"}[A.inc]||"s2"; }
+const QS=[
+  {k:"fac", show:()=>true, title:"入る予定、または検討中の施設は？", hint:"迷っている場合は、いちばん気になるものを選んでください。あとで変えられます。",
+    opts:()=>FAC_OPTS.map(o=>[o[0],o[1],o[2]])},
+  {k:"room", show:isFacility, title:"お部屋のタイプは？", hint:"施設のパンフレットや見学で確認できます。",
+    opts:()=>[["multi","相部屋（多床室）","2〜4人部屋"],["unit","ユニット型の個室","10人ほどの少人数グループで暮らす個室"],["trad","ユニットではない個室","従来型個室"],["multi","わからない","相部屋で計算します"]]},
+  {k:"care", show:()=>true, title:"要介護度は？", hint:"介護保険被保険者証に書いてあります。",
+    opts:()=>[1,2,3,4,5].map(n=>[String(n-1),"要介護"+n,""])},
+  {k:"tax", show:()=>true, title:"同じ世帯に、住民税を払っている人はいますか？", hint:"本人と、住民票が同じ家族で考えます。施設に入るときは、別の世帯の配偶者も含めて判定されます。",
+    opts:()=>[["yes","はい、いる","本人か家族の誰かが住民税を払っている"],["no","いいえ、全員払っていない","住民税非課税世帯"],["seiho","生活保護を受けている",""]]},
+  {k:"ratio", show:()=>A.tax==="yes", title:"介護保険の負担割合は？", hint:"「介護保険負担割合証」に書いてあります。",
+    opts:()=>[["1","1割",""],["2","2割",""],["3","3割",""],["1","わからない","1割で計算します"]]},
+  {k:"high", show:()=>A.tax==="yes" && A.ratio==="3", title:"本人の課税所得はどのくらい？", hint:"3割負担の方は、所得によって払い戻しの上限が変わります。",
+    opts:()=>[["44400","380万円未満",""],["93000","380万〜690万円未満",""],["140100","690万円以上",""],["44400","わからない","380万円未満で計算します"]]},
+  {k:"inc", show:()=>A.tax==="no", title:"本人の年金とその他の所得は、1年でどのくらい？", hint:"遺族年金・障害年金も含めます。境目の金額は年金額にあわせて見直されるため、正確な判定は市町村が行います。",
+    opts:()=>[["low","年80万円くらいまで",""],["mid","年80万円くらい〜120万円",""],["high","年120万円より多い",""],["unknown","わからない","年金の振込通知書や源泉徴収票で確認できます。いったん高めの第3段階②で計算します"]]},
+  {k:"spouse", show:()=>A.tax==="no" && isFacility(), title:"配偶者はいますか？", hint:"預貯金の基準額が変わります。",
+    opts:()=>[["yes","いる",""],["no","いない",""]]},
+  {k:"asset", show:()=>A.tax==="no" && isFacility(), title:()=>{const t=ASSET[stageOf()]; return `預貯金などの合計は ${t[A.spouse==="yes"?1:0]}万円以下ですか？`;},
+    hint:()=>A.spouse==="yes"?"夫婦あわせた金額です。普通預金・定期預金・有価証券・現金などを含みます。":"普通預金・定期預金・有価証券・現金などを含みます。",
+    opts:()=>[["under","はい、以下","負担限度額認定証の対象になります"],["over","いいえ、超えている","居住費・食費は軽減されません"],["under","わからない","以下として計算します"]]}
+];
+const visible=()=>QS.filter(q=>q.show());
+function applyAnswers(){
+  const target=A.fac||"toku";
+  if(fac!==target) setFac(target);
+  $("sub").selectedIndex=0;
+  if(A.room) $("room").value=A.room;
+  $("care").value=A.care||"2";
+  $("ratio").value = A.tax==="yes" ? (A.ratio||"1") : "1";
+  $("stage").value = A.tax ? stageOf() : "s2";
+  $("high").value = A.high||"44400";
+  $("asset").checked = A.asset==="over";
+  calc();
+}
+function renderQ(){
+  const vs=visible(), done=qi>=vs.length;
+  $("qProg").innerHTML=`<span class="prog">${vs.map((_,i)=>`<i class="${i<qi||done?"on":""}"></i>`).join("")}</span>`;
+  $("qBack").hidden = qi===0;
+  $("pending").hidden = done;
+  if(done){ $("qBody").hidden=true; $("qDone").hidden=false; renderDone(); return; }
+  $("qBody").hidden=false; $("qDone").hidden=true;
+  const q=vs[qi], t=typeof q.title==="function"?q.title():q.title, h=typeof q.hint==="function"?q.hint():q.hint;
+  $("qBody").innerHTML=`<div class="q"><span class="hint">質問 ${qi+1} / ${vs.length}</span><h3>${t}</h3><p class="qhint">${h}</p><div class="opts">`+
+    q.opts().map((o,i)=>`<button type="button" class="opt${A[q.k]===o[0]&&A[q.k+"_i"]===i?" sel":""}" data-k="${q.k}" data-v="${o[0]}" data-i="${i}"><span>${o[1]}</span>${o[2]?`<small>${o[2]}</small>`:""}</button>`).join("")+`</div></div>`;
+}
+function label(k){ const q=QS.find(x=>x.k===k); const o=q.opts()[A[k+"_i"]]; return o?o[1]:""; }
+function renderDone(){
+  const vs=visible(), st=stageOf(), f=DATA.facilities[A.fac];
+  let verdict;
+  if(f.kind==="facility"){
+    if(st==="s4") verdict="判定のめやす：第4段階（負担限度額認定証の対象外）";
+    else if(A.asset==="over") verdict=`判定のめやす：${STAGE_LABEL[st]}の所得ですが、預貯金が基準を超えるため認定証は出ません`;
+    else verdict=`判定のめやす：${STAGE_LABEL[st]}（負担限度額認定証で居住費・食費が軽くなります）`;
+  }else{
+    verdict = st==="s4" ? "所得区分のめやす：課税世帯（払い戻しの上限 月"+yen(+$("high").value)+"円）" : `所得区分のめやす：非課税世帯（払い戻しの上限 月${yen(DATA.highCap[st])}円）`;
+  }
+  $("qDone").innerHTML=`<div class="q"><h3>回答ありがとうございました</h3>
+    <div class="answers">${vs.map(q=>`<div><span>${(typeof q.title==="function"?q.title():q.title).replace(/は？$|ですか？$|？$/,"")}</span><span>${label(q.k)}</span></div>`).join("")}</div>
+    <span class="verdict">${verdict}</span>
+    ${A.inc==="unknown"?`<p class="pending" style="margin-top:10px">年金などの収入がわからないため、非課税世帯の中でいちばん負担が大きい第3段階②で計算しています。年金の振込通知書（毎年6月ごろ届く）や公的年金等の源泉徴収票（毎年1月ごろ届く）で年額を確認すると、正確な段階がわかります。収入が少ない場合は、ここより安くなります。</p>`:""}
+    <p class="hint" style="margin-top:8px">段階の正式な判定は市町村が行います。${f.kind==="facility"&&st!=="s4"?"負担限度額認定証は申請しないと出ないので、市町村の介護保険窓口に申請してください。":""}${f.kind==="home"?"家賃・管理費・食費は入力例の金額で計算しています。くわしくモードでホームの料金に置き換えられます。":"地域区分は「その他」で計算しています。"}</p>
+    <button type="button" class="btn cmpbtn" id="cmpBtn" aria-expanded="${cmpOpen}" aria-controls="cmp">${cmpOpen?"比較を閉じる":"同じ答えで、ほかの施設と比べる"}</button>
+    <div id="cmp" ${cmpOpen?"":"hidden"}></div>
+    <div class="donebtns"><button type="button" class="btn primary" id="toDetail">この条件をくわしくモードで見る</button><button type="button" class="btn ghost" id="restart">最初からやり直す</button></div></div>`;
+  $("cmpBtn").onclick=()=>{cmpOpen=!cmpOpen; renderDone();};
+  if(cmpOpen) renderCompare();
+  $("toDetail").onclick=()=>setMode("detail");
+  $("restart").onclick=()=>{A={};qi=0;cmpOpen=false;applyAnswers();renderQ();};
+}
+$("qBody").addEventListener("click",e=>{
+  const b=e.target.closest(".opt"); if(!b) return;
+  A[b.dataset.k]=b.dataset.v; A[b.dataset.k+"_i"]=+b.dataset.i;
+  qi++; applyAnswers(); renderQ();
+  $("simple").scrollIntoView({block:"nearest"});
+});
+$("qBack").addEventListener("click",()=>{ if(qi>0){qi--; renderQ();} });
+// ===== ほかの施設と比べる =====
+let cmpOpen=false;
+function snapshot(){
+  return { total:+$("tot").textContent.replace(/,/g,""), refund:+$("fRefund").textContent.replace(/[−,]/g,"") };
+}
+function renderCompare(){
+  const keep={...A};
+  const res=FAC_OPTS.map(o=>{ A={...keep, fac:o[0]}; applyAnswers(); return {key:o[0], name:o[1], ...snapshot()}; });
+  A=keep; prevTotal=null; prevVals=null; prevKeys=null; prevRefund=null; applyAnswers(); $("delta").hidden=true;
+  const max=Math.max(...res.map(r=>r.total+r.refund));
+  const care=+(A.care||2);
+  const note=r=>{
+    const n=[];
+    if(r.key==="toku" && care<2) n.push("要介護1・2は原則入所できません");
+    if(r.key==="gh") n.push("認知症の診断が必要・原則同じ市町村");
+    if(["tokutei","gh","jutaku"].includes(r.key)) n.push("家賃・食費は入力例の金額");
+    if(["toku","roken","iryo"].includes(r.key) && !A.room) n.push("相部屋で計算");
+    if(r.key==="jutaku") n.push("介護は限度額の60％で計算");
+    return n.join("／");
+  };
+  $("cmp").innerHTML=`<p class="hint" style="margin:12px 0 8px">収入・預貯金などの答えはそのままで、施設の種類だけ変えて計算しています。棒の斜線は、いったん払って後で戻る分です。行を押すと、その施設の内訳を上に表示します。</p>
+  <div class="cmplist">${["介護保険施設（認定証が使える）","老人ホーム・住まい（家賃・食費は契約どおり）"].map((g,gi)=>`<div class="cmpgrp">${g}</div>`+
+    res.slice(gi*3,gi*3+3).map(r=>`<button type="button" class="cmprow${r.key===A.fac?" cur":""}" data-k="${r.key}">
+      <span class="cn">${r.name}${r.key===A.fac?'<em>選択中</em>':""}</span>
+      <span class="cb"><span class="cf" style="width:${r.total/max*100}%"></span><span class="seg-refund" style="width:${r.refund/max*100}%"></span></span>
+      <span class="cv"><b>${yen(r.total)}</b>円${r.refund>0?`<small>窓口 ${yen(r.total+r.refund)}円・戻る ${yen(r.refund)}円</small>`:""}</span>
+      ${note(r)?`<span class="cnote">${note(r)}</span>`:""}
+    </button>`).join("")).join("")}</div>
+  <p class="hint" style="margin-top:8px">老人ホーム・サ高住の家賃や食費はホームごとに大きく違います。実際の料金表の金額は、くわしくモードで入力してください。</p>`;
+  $("cmp").querySelectorAll(".cmprow").forEach(b=>b.onclick=()=>{ A.fac=b.dataset.k; applyAnswers(); renderDone(); $("h-res").scrollIntoView({block:"start",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"}); });
+}
+function setMode(m){
+  const simple=m==="simple";
+  $("tabSimple").setAttribute("aria-selected",String(simple)); $("tabDetail").setAttribute("aria-selected",String(!simple));
+  $("simple").hidden=!simple; $("detail").hidden=simple;
+  $("pending").hidden = !simple || qi>=visible().length;
+  if(!simple) $("detail").scrollIntoView({block:"start",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+}
+$("tabSimple").addEventListener("click",()=>setMode("simple"));
+$("tabDetail").addEventListener("click",()=>setMode("detail"));
+
+stayTable(); setFac("toku"); applyAnswers(); renderQ(); setMode("simple");
+</script>
+
+</body></html>
