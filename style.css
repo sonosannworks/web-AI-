@@ -34,8 +34,8 @@
 *{box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 [id]{scroll-margin-top:90px;}
-/* ヒーローのバッジから飛ぶ先。PC幅はヘッダーが2段（最大160px）になるため広めに取る */
-@media (min-width:761px){ #cm-tools{scroll-margin-top:180px;} }
+/* ヒーローのバッジから飛ぶ先。この幅ではヘッダーが2段（107px）になるため広めに取る */
+@media (min-width:761px) and (max-width:1098px){ #cm-tools{scroll-margin-top:120px;} }
 body{
   margin:0;
   font-family:var(--font-body);
