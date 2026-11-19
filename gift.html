@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>先着50名様 無料配布｜ケアマネ向けAI Skill｜sonosann Web&AIサポート</title>
+<script>
+  // 配布の仕組みは web-ai-support.vercel.app 側で動くため、別ドメインで開かれたら転送する
+  if (location.hostname !== 'web-ai-support.vercel.app' && location.hostname !== 'localhost') {
+    location.replace('https://web-ai-support.vercel.app/gift.html' + location.search);
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green-900:#0B4A38; --green-700:#0F6E56; --green:#16A97C; --green-light:#E3F5EC; --green-lighter:#F2FAF6;
+    --pink:#FF6F9C; --pink-light:#FDEAF0; --orange:#F0932B; --orange-light:#FDF1E1;
+    --ink:#1B2B26; --ink-soft:#4B5D57; --ink-mute:#7C8C86; --line:#E4EEE9; --bg:#FCFEFD; --white:#fff;
+    --line-green:#06C755;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Noto Sans JP",sans-serif;color:var(--ink);background:var(--green-lighter);line-height:1.8}
+  .wrap{max-width:640px;margin:0 auto;padding:32px 20px 56px}
+  .brand{font-family:"Zen Maru Gothic",sans-serif;font-weight:700;color:var(--green-700);font-size:.95rem;text-align:center;margin-bottom:16px}
+  .card{background:var(--white);border-radius:24px;padding:32px 24px;box-shadow:0 6px 24px rgba(11,74,56,.08)}
+  .badge{display:inline-block;background:var(--pink);color:#fff;font-weight:700;font-size:.85rem;padding:4px 14px;border-radius:999px}
+  h1{font-family:"Zen Maru Gothic",sans-serif;font-weight:900;font-size:1.55rem;line-height:1.5;margin:12px 0 8px}
+  .lead{color:var(--ink-soft);margin:0 0 20px}
+  .remain{display:flex;align-items:baseline;gap:6px;justify-content:center;background:var(--orange-light);border-radius:16px;padding:12px;margin:20px 0;font-weight:700}
+  .remain strong{font-size:2rem;color:var(--orange);font-family:"Zen Maru Gothic",sans-serif}
+  ul.items{list-style:none;padding:0;margin:0 0 20px}
+  ul.items li{background:var(--green-light);border-radius:14px;padding:12px 16px;margin-bottom:10px}
+  ul.items b{color:var(--green-900)}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:0 0 24px}
+  .steps li{counter-increment:s;position:relative;padding-left:40px;margin-bottom:10px;color:var(--ink-soft)}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;border-radius:999px;font-weight:700;font-size:1.05rem;text-decoration:none;border:0;cursor:pointer}
+  .btn-line{background:var(--line-green);color:#fff}
+  .btn-dl{background:var(--green-700);color:#fff;margin-bottom:6px}
+  .btn[aria-disabled="true"]{background:#c9d3cf;pointer-events:none}
+  .note{font-size:.85rem;color:var(--ink-mute);margin-top:6px}
+  .pc{background:var(--pink-light);border-radius:14px;padding:12px 16px;font-size:.9rem;margin:0 0 20px}
+  .msg{border-radius:14px;padding:16px;margin-bottom:20px;font-weight:500}
+  .msg.ok{background:var(--green-light)}
+  .msg.warn{background:var(--orange-light)}
+  .dl-item{border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+  .dl-item h3{margin:0 0 10px;font-size:1rem}
+  footer{text-align:center;font-size:.8rem;color:var(--ink-mute);margin-top:24px}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">sonosann Web&amp;AIサポート</div>
+  <div class="card">
+    <span class="badge">先着50名様 無料配布</span>
+    <h1>ケアマネ業務のAI Skill<br>2点セットをプレゼント</h1>
+    <p class="lead">動画でご紹介した「課題整理総括表」と「ケアプラン第1・2表」を作るAI用Skillです。製品版と同じ内容をお届けします。</p>
+
+    <div id="message" class="msg" hidden></div>
+
+    <!-- 受け取り前 -->
+    <section id="view-start">
+      <div class="remain" id="remain" hidden>残り <strong id="remain-num">--</strong> 名</div>
+      <ul class="items">
+        <li><b>① 課題整理総括表 Skill</b><br>認定情報から24項目の評価の下書きを作成</li>
+        <li><b>② ケアプラン第1・2表 Skill</b><br>アセスメントと意向からケアプラン原案の下書きを作成</li>
+      </ul>
+      <p class="pc">💻 <b>パソコンで開くのがおすすめです。</b>ZIPファイルをパソコンに保存して、AIに設定して使います。</p>
+      <ol class="steps">
+        <li>下のボタンからLINEでログイン</li>
+        <li>「sonosann Web&amp;AIサポート」を友だち追加（受け取りの条件です）</li>
+        <li>ダウンロードボタンからZIPを保存</li>
+      </ol>
+      <a class="btn btn-line" id="login-btn" href="/api/gift-login">LINEでログインして受け取る</a>
+      <p class="note">お一人様1回限りです。LINEのプロフィール情報は受け取り確認のためだけに使います。</p>
+    </section>
+
+    <!-- 受け取り後 -->
+    <section id="view-download" hidden>
+      <div class="dl-item">
+        <h3>① 課題整理総括表 Skill</h3>
+        <a class="btn btn-dl" id="dl-kadai" href="/api/gift-download?item=kadai">ダウンロード</a>
+        <p class="note" id="dl-kadai-note"></p>
+      </div>
+      <div class="dl-item">
+        <h3>② ケアプラン第1・2表 Skill</h3>
+        <a class="btn btn-dl" id="dl-careplan" href="/api/gift-download?item=careplan">ダウンロード</a>
+        <p class="note" id="dl-careplan-note"></p>
+      </div>
+      <p class="note">※ このページは30分有効です。時間が過ぎたら、もう一度LINEでログインすると再表示されます。<br>
+      ※ 個人情報(氏名・住所など)は必ず伏せてからAIに渡してください。設定方法は動画と同梱の説明書をご覧ください。</p>
+    </section>
+  </div>
+  <footer>© sonosann Web&amp;AIサポート</footer>
+</div>
+
+<script>
+(async () => {
+  const status = new URLSearchParams(location.search).get('status');
+  const msg = document.getElementById('message');
+  const show = (text, cls) => { msg.innerHTML = text; msg.className = 'msg ' + cls; msg.hidden = false; };
+
+  const messages = {
+    closed: ['先着50名様への配布は終了しました。たくさんのお申し込みありがとうございました。<br>製品版のご案内はLINEでお届けします。', 'warn'],
+    not_friend: ['受け取りには「sonosann Web&amp;AIサポート」の友だち追加が必要です。<br><a href="https://line.me/R/ti/p/@319emxxq">こちらから友だち追加</a>したあと、もう一度ボタンを押してください。', 'warn'],
+    cancel: ['LINEログインがキャンセルされました。もう一度お試しください。', 'warn'],
+    expired: ['時間が経ったため、確認が切れました。もう一度LINEでログインしてください。', 'warn'],
+    limit: ['ダウンロード回数の上限に達しました。うまく保存できなかった場合は、LINEでご連絡ください。', 'warn'],
+    error: ['エラーが起きました。少し時間をおいて、もう一度お試しください。続く場合はLINEでご連絡ください。', 'warn'],
+  };
+  if (messages[status]) show(...messages[status]);
+
+  let data;
+  try {
+    const res = await fetch('/api/gift-status', { credentials: 'same-origin' });
+    data = await res.json();
+  } catch { return; }
+  if (data.error) return;
+
+  if (data.me) {
+    document.getElementById('view-start').hidden = true;
+    document.getElementById('view-download').hidden = false;
+    if (status === 'ok' || !messages[status]) {
+      show(`${data.me.name ? data.me.name + ' さん、' : ''}お申し込みありがとうございます！<br>下のボタンから2つのZIPを保存してください。`, 'ok');
+    }
+    for (const key of ['kadai', 'careplan']) {
+      const left = data.maxDownloads - data.me[key];
+      document.getElementById(`dl-${key}-note`).textContent =
+        left > 0 ? `あと${left}回ダウンロードできます` : 'ダウンロード回数の上限に達しました';
+      if (left <= 0) document.getElementById(`dl-${key}`).setAttribute('aria-disabled', 'true');
+    }
+    return;
+  }
+
+  document.getElementById('remain-num').textContent = data.remaining;
+  document.getElementById('remain').hidden = false;
+  if (data.remaining <= 0) {
+    const btn = document.getElementById('login-btn');
+    btn.textContent = '受け取り済みの方はこちら（再ダウンロード）';
+    if (!messages[status]) show(...messages.closed);
+  }
+})();
+</script>
+</body>
+</html>
