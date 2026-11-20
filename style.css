@@ -404,7 +404,7 @@ button.service-cta{border:1px solid rgba(27,43,38,.08);font:inherit;font-weight:
 .why-qr-title{margin:0;font-size:14px;font-weight:700;color:var(--green-900);}
 .why-qr-text{margin:4px 0 0;font-size:12.5px;color:var(--ink-soft);}
 @media (max-width:767px){
-  .why-qr{display:none;}
+  .why-qr{margin-top:32px;}
 }
 
 /* ---------- Footer ---------- */
